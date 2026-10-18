@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- ================================================================
+     Web.Release.config.example — قالب بيئة الإنتاج
+     ================================================================
+     هذا الملف قالب للمطوّرين الجدد.
+     انسخه إلى Web.Release.config وعدّل القيم قبل النشر.
+
+     ⚠️ Web.Release.config يجب أن يبقى خارج Git (.gitignore).
+        لا ترفع مفاتيح machineKey الحقيقية إلى الـ repository.
+
+     لتوليد مفاتيح جديدة، شغّل:
+       Tools\Generate-MachineKey.ps1
+     ================================================================ -->
+
+<configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
+
+	<connectionStrings>
+		<add name="DefaultConnection"
+			connectionString="Server=YOUR_PRODUCTION_SERVER\SQLSERVER;Database=NoorAlMalaikaSchool;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
+			xdt:Transform="SetAttributes(connectionString)" xdt:Locator="Match(name)" />
+	</connectionStrings>
+
+	<system.web>
+		<!--
+		  استبدل القيمتين أدناه بمفاتيح خاصة بالإنتاج مولَّدة بـ Generate-MachineKey.ps1.
+		  validationKey: 64 بايت hex (128 حرف)
+		  decryptionKey: 32 بايت hex (64 حرف)
+		-->
+		<machineKey validationKey="REPLACE_WITH_64_BYTE_HEX_VALIDATION_KEY_128_CHARS_LONG_00000000000000000000000000000000000000000000000000000000000000000000"
+		            decryptionKey="REPLACE_WITH_32_BYTE_HEX_DECRYPTION_KEY_64_CHARS_LONG_00000000000000000000"
+		            validation="HMACSHA256" decryption="AES"
+		            xdt:Transform="Replace" />
+
+		<compilation xdt:Transform="RemoveAttributes(debug)" />
+
+		<httpCookies httpOnlyCookies="true" requireSSL="true" xdt:Transform="SetAttributes(requireSSL)" xdt:Locator="Match(httpOnlyCookies)" />
+
+		<authentication mode="Forms">
+			<forms
+			  loginUrl="~/Login.aspx"
+			  timeout="60"
+			  defaultUrl="~/Default.aspx"
+			  requireSSL="true"
+			  slidingExpiration="true"
+			  xdt:Transform="SetAttributes(requireSSL)" xdt:Locator="Match(loginUrl)" />
+		</authentication>
+
+		<customErrors mode="On" defaultRedirect="~/Error.aspx" xdt:Transform="Replace">
+			<error statusCode="500" redirect="~/Error.aspx" />
+			<error statusCode="404" redirect="~/Error.aspx" />
+		</customErrors>
+	</system.web>
+
+	<system.webServer>
+		<httpProtocol xdt:Transform="InsertIfMissing">
+			<customHeaders>
+				<add name="Strict-Transport-Security" value="max-age=31536000" />
+				<add name="X-Content-Type-Options" value="nosniff" />
+				<add name="X-Frame-Options" value="SAMEORIGIN" />
+			</customHeaders>
+		</httpProtocol>
+	</system.webServer>
+
+</configuration>

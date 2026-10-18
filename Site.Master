@@ -1,0 +1,1185 @@
+<%@ Master Language="C#" AutoEventWireup="true"
+    CodeBehind="Site.Master.cs"
+    Inherits="NoorAlMalaikaSchool.SiteMaster" %>
+
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar">
+
+<head runat="server">
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>مدرسة نور الملائكة</title>
+
+    <link href="<%= ResolveUrl("~/Content/fonts/droid-arabic-kufi/DroidKufi.css") %>"
+          rel="stylesheet" />
+
+    <link href="<%= ResolveUrl("~/Content/css/bootstrap.rtl.min.css") %>"
+          rel="stylesheet" />
+
+    <link href="<%= ResolveUrl("~/Content/css/Site_Master.css") %>"
+          rel="stylesheet" />
+
+    <link href="<%= ResolveUrl("~/Content/fonts/fontawesome-free/css/all.min.css") %>"
+          rel="stylesheet" />
+
+    <style>
+        /* =========================================================
+           SIDEBAR — Flyout Design (RTL)
+           ========================================================= */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 275px;
+            height: 100vh;
+            background: #ffffff;
+            border-left: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        /* ---------- Brand ---------- */
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 20px;
+            border-bottom: 1px solid #eef1f3;
+        }
+        .sidebar-brand .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #00b14f 0%, #4ed17e 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 10px rgba(0,177,79,0.25);
+        }
+        .sidebar-brand .brand-text {
+            font-size: 15px;
+            font-weight: 800;
+            color: #212529;
+            line-height: 1.2;
+        }
+        .sidebar-brand .brand-sub {
+            font-size: 10.5px;
+            color: #868e96;
+            font-weight: 500;
+        }
+
+        /* ---------- Stage selector ---------- */
+        .stage-selector {
+            padding: 14px 20px 16px;
+            border-bottom: 1px solid #eef1f3;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+        }
+        .stage-selector label {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #6c757d;
+            margin-bottom: 6px;
+        }
+        .stage-selector .form-select {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background-color: #f9fafb;
+            color: #00b14f;
+            cursor: pointer;
+        }
+        .stage-selector .form-select:focus {
+            border-color: #00b14f;
+            box-shadow: 0 0 0 3px rgba(0,177,79,0.12);
+        }
+
+        /* ---------- Nav container ---------- */
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 10px 0;
+        }
+        .sidebar-nav::-webkit-scrollbar { width: 6px; }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(0,177,79,0.2);
+            border-radius: 3px;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,177,79,0.35);
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        /* ---------- Top-level link ---------- */
+        .nav-item > .nav-link-parent {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #495057;
+            font-size: 13.5px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-right: 3px solid transparent;
+        }
+        .nav-item > .nav-link-parent:hover {
+            background: rgba(0,177,79,0.06);
+            color: #00b14f;
+            text-decoration: none;
+        }
+        .nav-item.section-active > .nav-link-parent {
+            background: rgba(0,177,79,0.09);
+            color: #00b14f;
+            border-right-color: #00b14f;
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 15px;
+            color: #00b14f;
+            flex-shrink: 0;
+        }
+
+        .nav-chevron {
+            margin-right: auto;
+            font-size: 10px;
+            color: #adb5bd;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .nav-item:hover .nav-chevron {
+            transform: translateX(-3px);
+            color: #00b14f;
+        }
+
+        /* =========================================================
+           FLYOUT — fixed positioning (RTL)
+           ========================================================= */
+        .nav-flyout {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 8px;
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 14px;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.14);
+            list-style: none;
+            margin: 0;
+
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(10px);
+            transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .nav-flyout.flyout-open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        /* Arrow */
+        .nav-flyout::before {
+            content: '';
+            position: absolute;
+            right: -7px;
+            top: 18px;
+            width: 12px;
+            height: 12px;
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-left: none;
+            border-bottom: none;
+            transform: rotate(45deg);
+        }
+
+        .nav-flyout li { list-style: none; }
+
+        .nav-flyout li a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            color: #495057;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            border: 1px solid rgba(5, 132, 7, 0.4);
+            background: rgba(0, 177, 79, 0.02);
+        }
+        .nav-flyout li a:hover {
+            background: rgba(0,177,79,0.08);
+            color: #00b14f;
+            text-decoration: none;
+        }
+        .nav-flyout li a.active {
+            background: rgba(0,177,79,0.13);
+            color: #00b14f;
+            font-weight: 700;
+        }
+        .nav-flyout li a i {
+            font-size: 13px;
+            width: 18px;
+            text-align: center;
+            color: #00b14f;
+            flex-shrink: 0;
+        }
+
+        /* =========================================================
+           Sidebar Overlay (mobile)
+           ========================================================= */
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.5);
+            backdrop-filter: blur(2px);
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .sidebar-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* =========================================================
+           Main content offset (RTL)
+           ========================================================= */
+        .main-content {
+            margin-right: 268px;
+        }
+
+        /* =========================================================
+           Mobile (<= 991px)
+           ========================================================= */
+        @media (max-width: 991px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+                box-shadow: -8px 0 24px rgba(0,0,0,0.15);
+            }
+
+            .main-content {
+                margin-right: 0;
+            }
+
+            /* Flyout → Accordion inline */
+            .nav-flyout {
+                position: static;
+                min-width: 0;
+                width: auto;
+                padding: 4px 8px 8px;
+                margin: 0 12px 6px;
+                border: none;
+                box-shadow: none;
+                background: rgba(0,177,79,0.04);
+                border-radius: 10px;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                display: none;
+                pointer-events: auto;
+            }
+            .nav-flyout.flyout-open {
+                display: block;
+            }
+            .nav-flyout::before { display: none; }
+
+            .nav-item.open .nav-chevron {
+                transform: rotate(-90deg);
+                color: #00b14f;
+            }
+        }
+    </style>
+
+    <asp:ContentPlaceHolder ID="HeadContent"
+                            runat="server" />
+
+    <style>
+        /* جداول السجلات تتحول إلى بطاقات على الهاتف فقط */
+        @media (max-width: 767.98px) {
+            .mobile-card-table-wrap,
+            .mobile-card-table-container {
+                overflow-x: visible !important;
+                overflow-y: visible !important;
+                max-width: 100% !important;
+            }
+
+            table[data-mobile-card-table="true"] {
+                display: block !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                table-layout: auto !important;
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+            }
+            table[data-mobile-card-table="true"] > thead,
+            table[data-mobile-card-table="true"] > colgroup,
+            table[data-mobile-card-table="true"] > tbody > tr.mobile-card-table-header {
+                display: none !important;
+            }
+            table[data-mobile-card-table="true"] > tbody,
+            table[data-mobile-card-table="true"] > tfoot {
+                display: block !important;
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            table[data-mobile-card-table="true"] > tbody > tr,
+            table[data-mobile-card-table="true"] > tfoot > tr {
+                display: block !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 0 12px !important;
+                padding: 10px 14px !important;
+                border: 1px solid #e5eee9 !important;
+                border-radius: 14px !important;
+                background: #fff !important;
+                box-shadow: 0 4px 14px rgba(31, 61, 51, 0.06) !important;
+            }
+            table[data-mobile-card-table="true"] > tbody > tr > td,
+            table[data-mobile-card-table="true"] > tfoot > tr > td {
+                display: grid !important;
+                grid-template-columns: minmax(72px, 28%) minmax(0, 1fr) !important;
+                align-items: start !important;
+                gap: 8px !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 8px 0 !important;
+                border: 0 !important;
+                border-bottom: 1px solid #f1f3f5 !important;
+                background: transparent !important;
+                text-align: right !important;
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+                word-break: break-word !important;
+            }
+            table[data-mobile-card-table="true"] > tbody > tr > td[data-label]::before,
+            table[data-mobile-card-table="true"] > tfoot > tr > td[data-label]::before {
+                content: attr(data-label);
+                display: block;
+                color: #6c757d;
+                font-size: 11px;
+                font-weight: 800;
+                line-height: 1.6;
+                text-align: right;
+                overflow-wrap: anywhere;
+            }
+            table[data-mobile-card-table="true"] > tbody > tr > td[colspan],
+            table[data-mobile-card-table="true"] > tfoot > tr > td[colspan] {
+                display: block !important;
+                border-bottom: 0 !important;
+            }
+            table[data-mobile-card-table="true"] > tbody > tr > td[colspan]::before,
+            table[data-mobile-card-table="true"] > tfoot > tr > td[colspan]::before {
+                display: none !important;
+                content: none !important;
+            }
+            table[data-mobile-card-table="true"] > tbody > tr > td:last-child,
+            table[data-mobile-card-table="true"] > tfoot > tr > td:last-child {
+                border-bottom: 0 !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="key-value"] > tbody > tr {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 4px !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="key-value"] > tbody > tr > th,
+            table[data-mobile-card-table="true"][data-mobile-card-layout="key-value"] > tbody > tr > td {
+                display: block !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 3px 0 !important;
+                border: 0 !important;
+                background: transparent !important;
+                text-align: right !important;
+                white-space: normal !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="key-value"] > tbody > tr.net {
+                background: linear-gradient(90deg, rgba(0,177,79,0.08), rgba(0,177,79,0.04)) !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="key-value"] > tbody > tr.remaining {
+                background: linear-gradient(90deg, rgba(220,53,69,0.06), rgba(220,53,69,0.02)) !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="key-value"] > tbody > tr.net > th,
+            table[data-mobile-card-table="true"][data-mobile-card-layout="key-value"] > tbody > tr.net > td {
+                color: #007a33 !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="key-value"] > tbody > tr.remaining > th,
+            table[data-mobile-card-table="true"][data-mobile-card-layout="key-value"] > tbody > tr.remaining > td {
+                color: #a51c1c !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="field-grid"] {
+                border: 0 !important;
+                border-radius: 0 !important;
+                overflow: visible !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="field-grid"] > tbody {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 10px !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="field-grid"] > tbody > tr {
+                display: grid !important;
+                grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)) !important;
+                gap: 10px !important;
+                margin: 0 0 10px !important;
+                padding: 0 !important;
+                border: 0 !important;
+                border-radius: 0 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+            table[data-mobile-card-table="true"][data-mobile-card-layout="field-grid"] > tbody > tr > td {
+                display: block !important;
+                box-sizing: border-box !important;
+                width: auto !important;
+                max-width: 100% !important;
+                padding: 10px !important;
+                border: 1px solid #e5eee9 !important;
+                border-radius: 12px !important;
+                background: #fff !important;
+                box-shadow: 0 3px 10px rgba(31, 61, 51, 0.05) !important;
+                overflow-wrap: anywhere !important;
+            }
+            table[data-mobile-card-table="true"] > tbody > tr > td > *,
+            table[data-mobile-card-table="true"] > tfoot > tr > td > * {
+                box-sizing: border-box;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                overflow-wrap: anywhere;
+            }
+            table[data-mobile-card-table="true"] input:not([type="checkbox"]):not([type="radio"]),
+            table[data-mobile-card-table="true"] select,
+            table[data-mobile-card-table="true"] textarea {
+                box-sizing: border-box !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }
+            table[data-mobile-card-table="true"] button,
+            table[data-mobile-card-table="true"] .btn {
+                max-width: 100% !important;
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+<form id="form1"
+      runat="server">
+
+    <asp:ScriptManager ID="ScriptManager1"
+                       runat="server"
+                       EnablePartialRendering="true" />
+
+    <!-- ===================================================== -->
+    <!-- Sidebar -->
+    <!-- ===================================================== -->
+
+    <aside class="sidebar"
+           id="sidebar">
+
+        <!-- Brand -->
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div>
+                <div class="brand-text">نور الملائكة</div>
+                <div class="brand-sub">Noor Al Malaika School</div>
+            </div>
+        </div>
+
+        <!-- Stage -->
+        <div class="stage-selector">
+            <label>المستوى الدراسي</label>
+            <asp:DropDownList
+                ID="ddlStage"
+                runat="server"
+                CssClass="form-select"
+                AutoPostBack="true"
+                OnSelectedIndexChanged="ddlStage_SelectedIndexChanged">
+                <asp:ListItem Text="المرحلة الأساسية" Value="Basic" />
+                <asp:ListItem Text="المرحلة الثانوية" Value="Secondary" />
+            </asp:DropDownList>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+
+            <ul class="nav-list">
+
+                <!-- =========================================== -->
+                <!-- 1) لوحة التحكم — رابط مباشر -->
+                <!-- =========================================== -->
+                <li id="navMain" runat="server"
+                    class='nav-item <%= GetActiveClass("Default.aspx") %>'>
+                    <a href='<%= GetStageUrl("Default.aspx") %>'
+                       class="nav-link-parent">
+                        <i class="nav-icon fas fa-th-large"></i>
+                        <span>لوحة التحكم</span>
+                    </a>
+                </li>
+
+                <li id="navWhatsApp" runat="server" class='nav-item <%= GetActiveClass("WhatsApp") %>'>
+                    <a href='<%= GetStageUrl("WhatsApp/Default.aspx") %>' class="nav-link-parent">
+                        <i class="nav-icon fab fa-whatsapp"></i>
+                        <span>واتساب</span>
+                    </a>
+                </li>
+
+                <!-- =========================================== -->
+                <!-- 2) الشؤون الإدارية للطلاب -->
+                <!-- =========================================== -->
+                <li id="navStudents" runat="server"
+                    class='nav-item has-flyout <%= GetSectionActiveClass("Students","Attendance","StudentList","AttendanceReport") %>'>
+                    <a href="javascript:void(0);" class="nav-link-parent">
+                        <i class="nav-icon fas fa-user-graduate"></i>
+                        <span>الشؤون الإدارية للطلاب</span>
+                        <i class="nav-chevron fas fa-chevron-left"></i>
+                    </a>
+                    <ul class="nav-flyout">
+                        <li id="liStudentsManagement" runat="server">
+                            <a href='<%= GetStageUrl("Students/Default.aspx") %>'
+                               class='<%= GetActiveClass("Students") %>'>
+                                <i class="fas fa-user-graduate"></i>
+                                إدارة بيانات الطلاب
+                            </a>
+                        </li>
+                        <li id="liAttendanceManagement" runat="server">
+                            <a href='<%= GetStageUrl("Attendance/Default.aspx") %>'
+                               class='<%= GetActiveClass("Attendance") %>'>
+                                <i class="fas fa-clipboard-check"></i>
+                                إدارة الحضور والغياب
+                            </a>
+                        </li>
+                        <li id="liStudentListReport" runat="server">
+                            <a href='<%= GetStageUrl("Reports/StudentList.aspx") %>'
+                               class='<%= GetActiveClass("StudentList") %>'>
+                                <i class="fas fa-chart-bar"></i>
+                                تقرير بيانات الطلاب
+                            </a>
+                        </li>
+                        <li id="liAttendanceReport" runat="server">
+                            <a href='<%= GetStageUrl("Reports/AttendanceReport.aspx") %>'
+                               class='<%= GetActiveClass("AttendanceReport") %>'>
+                                <i class="fas fa-user-check"></i>
+                                تقرير الحضور والغياب
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- =========================================== -->
+                <!-- 3) الشؤون المالية للطلاب -->
+                <!-- =========================================== -->
+                <li id="navFinance" runat="server"
+                    class='nav-item has-flyout <%= GetSectionActiveClass("StudentFinances","Fees","Invoices","DiscountPolicies") %>'>
+                    <a href="javascript:void(0);" class="nav-link-parent">
+                        <i class="nav-icon fas fa-wallet"></i>
+                        <span>الشؤون المالية للطلاب</span>
+                        <i class="nav-chevron fas fa-chevron-left"></i>
+                    </a>
+                    <ul class="nav-flyout">
+                        <li>
+                            <a href='<%= GetStageUrl("Fees/StudentFinances.aspx") %>'
+                               class='<%= GetActiveClass("StudentFinances") %>'>
+                                <i class="fas fa-user-tag"></i>
+                                رسوم اشتراك الطلاب
+                            </a>
+                        </li>
+                        <li>
+                            <a href='<%= GetStageUrl("Fees/Default.aspx") %>'
+                               class='<%= GetActiveClass("Fees") %>'>
+                                <i class="fas fa-money-bill-wave"></i>
+                                إدارة رسوم الاشتراك
+                            </a>
+                        </li>
+                        <li>
+                            <a href='<%= GetStageUrl("Invoices/Default.aspx") %>'
+                               class='<%= GetActiveClass("Invoices") %>'>
+                                <i class="fas fa-file-invoice"></i>
+                                إدارة الفواتير المالية
+                            </a>
+                        </li>
+                        <li>
+                            <a href='<%= GetStageUrl("DiscountPolicies/Default.aspx") %>'
+                               class='<%= GetActiveClass("DiscountPolicies") %>'>
+                                <i class="fas fa-percent"></i>
+                                إدارة الخصومات المالية
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- =========================================== -->
+                <!-- 4) الشؤون الأكاديمية -->
+                <!-- =========================================== -->
+                <li id="navAcademic" runat="server"
+                    class='nav-item has-flyout <%= GetSectionActiveClass("Classes","Subjects","Timetable","MonthlySheets") %>'>
+                    <a href="javascript:void(0);" class="nav-link-parent">
+                        <i class="nav-icon fas fa-book-open"></i>
+                        <span>الشؤون الأكاديمية</span>
+                        <i class="nav-chevron fas fa-chevron-left"></i>
+                    </a>
+                    <ul class="nav-flyout">
+                        <li>
+                            <a href='<%= GetStageUrl("Classes/Default.aspx") %>'
+                               class='<%= GetActiveClass("Classes") %>'>
+                                <i class="fas fa-chalkboard"></i>
+                                إدارة الصفوف الدراسية
+                            </a>
+                        </li>
+                        <li>
+                            <a href='<%= GetStageUrl("Subjects/Default.aspx") %>'
+                               class='<%= GetActiveClass("Subjects") %>'>
+                                <i class="fas fa-book-open"></i>
+                                إدارة المواد الدراسية
+                            </a>
+                        </li>
+                        <li>
+                            <a href='<%= GetStageUrl("Timetable/Default.aspx") %>'
+                               class='<%= GetActiveClass("Timetable") %>'>
+                                <i class="fas fa-calendar-alt"></i>
+                                إدارة الجدول المدرسي
+                            </a>
+                        </li>
+                         <!-- عرض الجداول: للمستخدم View -->
+                        <li id="liSchoolTimetable" runat="server">
+                            <a href="<%= ResolveUrl("~/Pages/Timetable/SchoolTimetable.aspx") %>">
+                                <i class="fas fa-calendar-check"></i>
+                                عرض الجداول المدرسية
+                            </a>
+                        </li>
+                        <li>
+                            <a href='<%= GetStageUrl("MonthlySheets/Default.aspx") %>'
+                               class='<%= GetActiveClass("MonthlySheets") %>'>
+                                <i class="fas fa-file-alt"></i>
+                                إدارة الصحيفة الشهرية
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- =========================================== -->
+                <!-- 5) شؤون المعلمين والمعلمات -->
+                <!-- =========================================== -->
+                <li id="navTeachers" runat="server" class="nav-item has-flyout">
+                    <a href="javascript:void(0);" class="nav-link-parent">
+                        <i class="nav-icon fas fa-chalkboard-teacher"></i>
+                        <span>شؤون المعلمين والمعلمات</span>
+                        <i class="nav-chevron fas fa-chevron-left"></i>
+                    </a>
+                    <ul class="nav-flyout">
+                        <li id="liTeachersDefault" runat="server">
+                            <a id="lnkTeachersDefault" runat="server" class=""></a>
+                        </li>
+
+                        <li id="liAttendanceHome" runat="server">
+                            <a id="lnkAttendanceHome" runat="server" class=""></a>
+                        </li>
+
+                        <!-- ⭐ رابط: المعلمون الدائمون والمشرفون -->
+                        <li id="liPermanentStaff" runat="server">
+                            <a id="lnkPermanentStaff" runat="server" class=""></a>
+                        </li>
+
+                        <li id="liMyRecords" runat="server">
+                            <a id="lnkMyRecords" runat="server" class=""></a>
+                        </li>
+                        <!-- الشؤون المالية للمعلمين -->
+                        <li id="liTeachersFinances" runat="server">
+                            <a id="lnkTeachersFinances" runat="server" class=""></a>
+                        </li>
+
+                        <!-- كشف استحقاقات المعلمين - للعرض فقط -->
+                        <li id="liTeachersFinancesView" runat="server">
+                            <a id="lnkTeachersFinancesView" runat="server" class=""></a>
+                        </li>
+                        <li id="liTeacherReport" runat="server">
+                            <a id="lnkTeacherReport" runat="server" class=""></a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- =========================================== -->
+                <!-- 6) التقارير العامة -->
+                <!-- =========================================== -->
+                <li id="navReports" runat="server"
+                    class='nav-item has-flyout <%= GetSectionActiveClass("FinancialReport","StudentFinancialTotals","StudentFinancialStatement") %>'>
+                    <a href="javascript:void(0);" class="nav-link-parent">
+                        <i class="nav-icon fas fa-chart-pie"></i>
+                        <span>التقارير العامة</span>
+                        <i class="nav-chevron fas fa-chevron-left"></i>
+                    </a>
+                    <ul class="nav-flyout">
+                        <li>
+                            <a id="lnkFinancialReport"
+                               runat="server"
+                               class='<%= GetActiveClass("FinancialReport") %>'>
+                                <i class="fas fa-chart-line"></i>
+                                التقرير المالي للطلاب
+                            </a>
+                        </li>
+
+                        <!-- ⭐ جديد: التقرير المالي الإجمالي للطلاب -->
+                        <li id="liStudentFinancialTotals" runat="server">
+                            <a id="lnkStudentFinancialTotals" runat="server" class=""></a>
+                        </li>
+
+                        <li id="liStudentFinancialStatement" runat="server">
+                            <a href='<%= GetStageUrl("Reports/StudentFinancialStatement.aspx") %>'
+                               class='<%= GetActiveClass("StudentFinancialStatement") %>'>
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                الكشف المالي للطلاب
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- =========================================== -->
+                <!-- 7) إدارة النظام -->
+                <!-- =========================================== -->
+                <li id="navSystem" runat="server"
+                    class='nav-item has-flyout <%= GetSectionActiveClass("Users","BackupRestore","AuditLog") %>'>
+                    <a href="javascript:void(0);" class="nav-link-parent">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <span>إدارة النظام</span>
+                        <i class="nav-chevron fas fa-chevron-left"></i>
+                    </a>
+                    <ul class="nav-flyout">
+                        <li>
+                            <a href='<%= GetStageUrl("Security/Users.aspx") %>'
+                               class='<%= GetActiveClass("Users") %>'>
+                                <i class="fas fa-users-cog"></i>
+                                إدارة المستخدمين والصلاحيات
+                            </a>
+                        </li>
+                        <li>
+                            <a href='<%= ResolveUrl("~/Pages/Database/BackupRestore.aspx") %>'
+                               class='<%= GetActiveClass("BackupRestore") %>'>
+                                <i class="fas fa-database"></i>
+                                نسخ قاعدة البيانات واستعادتها
+                            </a>
+                        </li>
+                        <li>
+                            <a href='<%= GetStageUrl("Security/AuditLog.aspx") %>'
+                               class='<%= GetActiveClass("AuditLog") %>'>
+                                <i class="fas fa-history"></i>
+                                سجل تدقيق النظام
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </aside>
+
+    <div class="sidebar-overlay no-print"
+         id="sidebarOverlay"
+         aria-hidden="true"></div>
+
+
+    <!-- ===================================================== -->
+    <!-- Main Content -->
+    <!-- ===================================================== -->
+
+    <div class="main-content">
+
+        <header class="top-header">
+
+            <div class="header-main">
+
+                <button type="button"
+                        class="sidebar-toggle no-print"
+                        id="sidebarToggle"
+                        aria-label="فتح القائمة الجانبية"
+                        aria-controls="sidebar"
+                        aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div class="page-title-area">
+
+                    <h5 id="pageTitle"
+                        runat="server">
+
+                        لوحة التحكم
+
+                    </h5>
+
+                </div>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <button type="button"
+                        class="header-icon-btn no-print"
+                        onclick="window.print()"
+                        title="طباعة">
+                    <i class="fas fa-print"></i>
+                </button>
+
+                <div class="header-icon-btn"
+                     style="cursor:default;">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge-dot"></span>
+                </div>
+
+                <div class="user-avatar"
+                     title=""
+                     style="cursor:default;">
+                    <asp:Literal ID="litUserInitial" runat="server" />
+                </div>
+
+                <span style="font-size:13px;font-weight:600;color:var(--text-secondary);"
+                      class="no-print">
+                    <asp:Literal ID="litDisplayName" runat="server" />
+                </span>
+
+                <asp:LinkButton ID="btnLogout"
+                    runat="server"
+                    OnClick="btnLogout_Click"
+                    CssClass="no-print"
+                    style="border:none;background:none;color:#dc2626;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    خروج
+                </asp:LinkButton>
+
+            </div>
+
+        </header>
+
+
+        <div class="content-wrapper">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+        </div>
+
+
+        <footer class="footer">
+
+            <span class="school-name">
+                مدرسة نور الملائكة
+            </span>
+
+            &copy;
+            <%= DateTime.Now.Year %>
+            — جميع الحقوق محفوظة
+
+        </footer>
+
+    </div>
+
+</form>
+
+
+<script src="<%= ResolveUrl("~/Content/js/bootstrap.bundle.min.js") %>"></script>
+
+<script>
+    (function () {
+        function initSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var toggle = document.getElementById('sidebarToggle');
+            var overlay = document.getElementById('sidebarOverlay');
+
+            if (!sidebar || !toggle || !overlay) return;
+
+            function closeSidebar() {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+                toggle.setAttribute('aria-expanded', 'false');
+                document.body.classList.remove('sidebar-open');
+            }
+            function openSidebar() {
+                sidebar.classList.add('show');
+                overlay.classList.add('show');
+                toggle.setAttribute('aria-expanded', 'true');
+                document.body.classList.add('sidebar-open');
+            }
+
+            toggle.addEventListener('click', function () {
+                if (sidebar.classList.contains('show')) closeSidebar();
+                else openSidebar();
+            });
+            overlay.addEventListener('click', closeSidebar);
+
+            var flyoutItems = sidebar.querySelectorAll('.nav-item.has-flyout');
+
+            function closeAllFlyouts(except) {
+                sidebar.querySelectorAll('.nav-flyout.flyout-open').forEach(function (f) {
+                    if (f !== except) f.classList.remove('flyout-open');
+                });
+            }
+
+            function positionFlyout(item, flyout) {
+                var parentLink = item.querySelector('.nav-link-parent');
+                if (!parentLink) return;
+
+                var parentRect = parentLink.getBoundingClientRect();
+
+                var rightPos = window.innerWidth - parentRect.left + 8;
+                var topPos = parentRect.top;
+
+                var fh = flyout.scrollHeight || 200;
+
+                if (topPos + fh > window.innerHeight - 12) {
+                    topPos = window.innerHeight - fh - 12;
+                }
+                if (topPos < 12) topPos = 12;
+
+                flyout.style.right = rightPos + 'px';
+                flyout.style.top = topPos + 'px';
+            }
+
+            flyoutItems.forEach(function (item) {
+                var flyout = item.querySelector('.nav-flyout');
+                if (!flyout) return;
+
+                var hideTimer = null;
+
+                function showFlyout() {
+                    if (window.innerWidth <= 991) return;
+                    clearTimeout(hideTimer);
+                    closeAllFlyouts(flyout);
+                    flyout.classList.add('flyout-open');
+                    positionFlyout(item, flyout);
+                }
+
+                function hideFlyout() {
+                    if (window.innerWidth <= 991) return;
+                    hideTimer = setTimeout(function () {
+                        flyout.classList.remove('flyout-open');
+                    }, 150);
+                }
+
+                item.addEventListener('mouseenter', showFlyout);
+                item.addEventListener('mouseleave', hideFlyout);
+                flyout.addEventListener('mouseenter', function () {
+                    clearTimeout(hideTimer);
+                });
+                flyout.addEventListener('mouseleave', hideFlyout);
+            });
+
+            sidebar.addEventListener('click', function (event) {
+                var parentLink = event.target.closest('.nav-item.has-flyout > .nav-link-parent');
+
+                if (parentLink && window.innerWidth <= 991) {
+                    event.preventDefault();
+                    var item = parentLink.parentElement;
+                    var flyout = item.querySelector('.nav-flyout');
+
+                    sidebar.querySelectorAll('.nav-item.has-flyout.open').forEach(function (other) {
+                        if (other !== item) {
+                            other.classList.remove('open');
+                            var otherFlyout = other.querySelector('.nav-flyout');
+                            if (otherFlyout) otherFlyout.classList.remove('flyout-open');
+                        }
+                    });
+
+                    item.classList.toggle('open');
+                    if (flyout) flyout.classList.toggle('flyout-open');
+                    return;
+                }
+
+                var link = event.target.closest('.nav-flyout a, .nav-item:not(.has-flyout) > .nav-link-parent');
+                if (link && window.innerWidth <= 991) closeSidebar();
+            });
+
+            var navScroll = sidebar.querySelector('.sidebar-nav');
+            if (navScroll) {
+                navScroll.addEventListener('scroll', function () {
+                    closeAllFlyouts(null);
+                });
+            }
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 991) {
+                    closeSidebar();
+                } else {
+                    closeAllFlyouts(null);
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeSidebar();
+                    closeAllFlyouts(null);
+                }
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSidebar);
+        } else {
+            initSidebar();
+        }
+    })();
+</script>
+
+<asp:ContentPlaceHolder ID="Scripts" runat="server" />
+
+<script>
+    (function () {
+        function markMobileTableContainers(table) {
+            var wrapper = table.closest('.table-responsive, [class*="table-wrap"]') || table.parentElement;
+            if (wrapper) wrapper.classList.add('mobile-card-table-wrap');
+
+            var cardBody = table.closest('.card-body, .card-body-custom, .fees-card-body, .sr-card-body, .id-card-body, .del-card-body');
+            if (cardBody) cardBody.classList.add('mobile-card-table-container');
+        }
+
+        function getDirectHeaderRow(table) {
+            if (table.tHead && table.tHead.rows.length) {
+                return table.tHead.rows[table.tHead.rows.length - 1];
+            }
+
+            var bodies = Array.prototype.slice.call(table.tBodies || []);
+            for (var bodyIndex = 0; bodyIndex < bodies.length; bodyIndex++) {
+                var rows = Array.prototype.slice.call(bodies[bodyIndex].rows || []);
+                for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+                    var cells = Array.prototype.slice.call(rows[rowIndex].cells || []);
+                    if (cells.some(function (cell) { return cell.tagName === 'TH'; }))
+                        return rows[rowIndex];
+                }
+            }
+            return null;
+        }
+
+        function enhanceMobileCardTables() {
+            var pagePath = (window.location.pathname || '').toLowerCase();
+            var tables = document.querySelectorAll('table');
+
+            Array.prototype.forEach.call(tables, function (table) {
+                if (table.hasAttribute('data-mobile-card-table')) return;
+                if (table.closest('.no-mobile-cards')) return;
+
+                // These pages already render and label their own mobile cards.
+                if (table.classList.contains('us-table')
+                    || table.classList.contains('attendance-table')
+                    || table.classList.contains('take-table')
+                    || (table.classList.contains('students-table')
+                        && pagePath.endsWith('/pages/students/default.aspx'))) return;
+
+                // Preserve tables that already provide their own mobile card markup.
+                var hasExistingLabels = Array.prototype.some.call(table.tBodies || [], function (body) {
+                    return Array.prototype.some.call(body.rows || [], function (row) {
+                        return Array.prototype.some.call(row.cells || [], function (cell) {
+                            return cell.hasAttribute('data-label');
+                        });
+                    });
+                });
+                if (hasExistingLabels) return;
+
+                // Key/value and student summary tables do not have column headers.
+                if (table.classList.contains('id-summary-table') || table.classList.contains('del-info-table')) {
+                    table.setAttribute('data-mobile-card-table', 'true');
+                    table.setAttribute('data-mobile-card-layout', 'key-value');
+                    markMobileTableContainers(table);
+                    return;
+                }
+                if (table.classList.contains('sr-info-table')) {
+                    table.setAttribute('data-mobile-card-table', 'true');
+                    table.setAttribute('data-mobile-card-layout', 'field-grid');
+                    markMobileTableContainers(table);
+                    return;
+                }
+
+                var headerRow = getDirectHeaderRow(table);
+                if (!headerRow) return;
+
+                var labels = Array.prototype.map.call(headerRow.cells, function (cell) {
+                    return (cell.innerText || cell.textContent || '').replace(/\s+/g, ' ').trim();
+                });
+                if (!labels.some(function (label) { return label.length > 0; })) return;
+
+                table.setAttribute('data-mobile-card-table', 'true');
+                if (headerRow.parentElement && headerRow.parentElement.tagName === 'TBODY')
+                    headerRow.classList.add('mobile-card-table-header');
+
+                Array.prototype.forEach.call(table.tBodies || [], function (body) {
+                    Array.prototype.forEach.call(body.rows || [], function (row) {
+                        var cells = Array.prototype.slice.call(row.cells || []);
+                        if (row === headerRow || cells.some(function (cell) { return cell.tagName === 'TH'; })) return;
+                        if (cells.length === 1 && cells[0].colSpan > 1) return;
+
+                        var columnIndex = 0;
+                        cells.forEach(function (cell) {
+                            var span = Math.max(1, cell.colSpan || 1);
+                            var label = labels[columnIndex] || '';
+                            if (label && !cell.hasAttribute('data-label'))
+                                cell.setAttribute('data-label', label);
+                            columnIndex += span;
+                        });
+                    });
+                });
+
+                Array.prototype.forEach.call(table.tFoot ? table.tFoot.rows : [], function (row) {
+                    var columnIndex = 0;
+                    Array.prototype.forEach.call(row.cells || [], function (cell) {
+                        var span = Math.max(1, cell.colSpan || 1);
+                        var label = labels[columnIndex] || '';
+                        if (label && !cell.hasAttribute('data-label') && cell.colSpan === 1)
+                            cell.setAttribute('data-label', label);
+                        columnIndex += span;
+                    });
+                });
+
+                markMobileTableContainers(table);
+            });
+        }
+
+        enhanceMobileCardTables();
+        if (window.Sys && Sys.Application)
+            Sys.Application.add_load(enhanceMobileCardTables);
+    })();
+</script>
+
+</body>
+
+</html>
