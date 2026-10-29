@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -8,9 +8,8 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using NoorAlMalaikaSchool.Data;
 using NoorAlMalaikaSchool.Data.Helpers;
-using NoorAlMalaikaSchool.Data.Services;
-using NoorAlMalaikaSchool.Models;
 using NoorAlMalaikaSchool.Services;
+using NoorAlMalaikaSchool.Models;
 
 namespace NoorAlMalaikaSchool.Pages.Payments
 {

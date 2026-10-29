@@ -2,9 +2,10 @@ using System;
 using System.Data;
 using System.Data.Entity;
 using System.Linq;
+using NoorAlMalaikaSchool.Data;
 using NoorAlMalaikaSchool.Models;
 
-namespace NoorAlMalaikaSchool.Data.Services
+namespace NoorAlMalaikaSchool.Services
 {
     public static class FinancialService
     {
@@ -37,12 +38,7 @@ namespace NoorAlMalaikaSchool.Data.Services
         {
             decimal paid = db.Payments.Where(p => p.InvoiceId == invoice.Id).Select(p => (decimal?)p.Amount).Sum() ?? 0m;
             invoice.PaidAmount = Math.Min(invoice.NetAmount, Math.Max(0m, paid));
-            if (invoice.Status != InvoiceStatus.Cancelled && invoice.Status != InvoiceStatus.Draft)
-            {
-                if (invoice.PaidAmount <= 0m) invoice.Status = InvoiceStatus.Issued;
-                else if (invoice.PaidAmount >= invoice.NetAmount) invoice.Status = InvoiceStatus.Paid;
-                else invoice.Status = InvoiceStatus.PartiallyPaid;
-            }
+            invoice.Status = InvoiceCalculator.ResolveStatus(invoice.NetAmount, invoice.PaidAmount, invoice.Status);
         }
 
         public static Payment CreatePayment(SchoolDbContext db, int invoiceId, int feeId, decimal amount,

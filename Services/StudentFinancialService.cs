@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using NoorAlMalaikaSchool.Data;
 using NoorAlMalaikaSchool.Models;
 
-namespace NoorAlMalaikaSchool.Data.Services
+namespace NoorAlMalaikaSchool.Services
 {
     public static class StudentFinancialService
     {

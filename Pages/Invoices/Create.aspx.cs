@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -11,9 +11,8 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using NoorAlMalaikaSchool.Data;
 using NoorAlMalaikaSchool.Data.Helpers;
-using NoorAlMalaikaSchool.Data.Services;
-using NoorAlMalaikaSchool.Models;
 using NoorAlMalaikaSchool.Services;
+using NoorAlMalaikaSchool.Models;
 
 namespace NoorAlMalaikaSchool.Pages.Invoices
 {
@@ -1140,11 +1139,6 @@ namespace NoorAlMalaikaSchool.Pages.Invoices
                             StudentId = studentId,
                             AcademicYearId = academicYearId,
                             InvoiceDate = invoiceDate,
-                            TotalAmount = subtotal,
-                            DiscountAmount = totalDiscount,
-                            NetAmount = net,
-                            PaidAmount = 0,
-                            Status = InvoiceStatus.Issued,
                             Notes = "",
                             CreatedBy = (Session["DisplayName"] as string)
                                         ?? (Session["Username"] as string)
@@ -1153,6 +1147,9 @@ namespace NoorAlMalaikaSchool.Pages.Invoices
                             Lines = new List<InvoiceLine>(),
                             Discounts = new List<InvoiceDiscount>()
                         };
+
+                        // حساب موحّد ومُختبَر (Total/Discount/Net/Paid/Status).
+                        InvoiceCalculator.Apply(invoice, subtotal, totalDiscount, 0m);
 
                         foreach (var selected in selectedFees)
                         {

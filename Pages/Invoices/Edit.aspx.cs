@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Globalization;
@@ -8,9 +8,8 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using NoorAlMalaikaSchool.Data;
 using NoorAlMalaikaSchool.Data.Helpers;
-using NoorAlMalaikaSchool.Data.Services;
-using NoorAlMalaikaSchool.Models;
 using NoorAlMalaikaSchool.Services;
+using NoorAlMalaikaSchool.Models;
 
 namespace NoorAlMalaikaSchool.Pages.Invoices
 {
@@ -556,20 +555,8 @@ namespace NoorAlMalaikaSchool.Pages.Invoices
                             invoice.Discounts.Add(d);
                         }
 
-                        // التحديثات
-                        invoice.TotalAmount = newTotal;
-                        invoice.DiscountAmount = newDiscountTotal;
-                        invoice.NetAmount = newNet;
-                        invoice.PaidAmount = Math.Min(newNet, paidTotal);
-
-                        if (newNet <= 0)
-                            invoice.Status = InvoiceStatus.Paid;
-                        else if (paidTotal <= 0)
-                            invoice.Status = InvoiceStatus.Issued;
-                        else if (paidTotal >= newNet)
-                            invoice.Status = InvoiceStatus.Paid;
-                        else
-                            invoice.Status = InvoiceStatus.PartiallyPaid;
+                        // التحديثات — حساب موحّد ومُختبَر في Services\InvoiceCalculator
+                        InvoiceCalculator.Apply(invoice, newTotal, newDiscountTotal, paidTotal);
 
                         invoice.InvoiceDate = invoiceDate;
                         invoice.Notes = txtNotes.Text == null ? "" : txtNotes.Text.Trim();
