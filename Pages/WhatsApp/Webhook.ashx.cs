@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -30,16 +32,13 @@ namespace NoorAlMalaikaSchool.Pages.WhatsApp
                 return;
             }
 
+            const int maxWebhookBytes = 1024 * 1024;
             byte[] body;
-            if (context.Request.ContentLength > 1024 * 1024)
+            if (context.Request.ContentLength > maxWebhookBytes ||
+                !TryReadBounded(context.Request.InputStream, maxWebhookBytes, out body))
             {
                 context.Response.StatusCode = 413;
                 return;
-            }
-            using (var buffer = new MemoryStream())
-            {
-                context.Request.InputStream.CopyTo(buffer);
-                body = buffer.ToArray();
             }
             if (!IsValidSignature(body, context.Request.Headers["X-Hub-Signature-256"]))
             {
@@ -96,6 +95,33 @@ namespace NoorAlMalaikaSchool.Pages.WhatsApp
             }
         }
 
+        private static bool TryReadBounded(Stream input, int maximumBytes, out byte[] body)
+        {
+            using (var buffer = new MemoryStream())
+            {
+                byte[] chunk = new byte[81920];
+                while (true)
+                {
+                    int remaining = maximumBytes + 1 - (int)buffer.Length;
+                    if (remaining <= 0)
+                    {
+                        body = null;
+                        return false;
+                    }
+                    int read = input.Read(chunk, 0, Math.Min(chunk.Length, remaining));
+                    if (read == 0) break;
+                    if (buffer.Length + read > maximumBytes)
+                    {
+                        body = null;
+                        return false;
+                    }
+                    buffer.Write(chunk, 0, read);
+                }
+                body = buffer.ToArray();
+                return true;
+            }
+        }
+
         private static bool SecureEquals(string left, string right)
         {
             if (left == null || right == null) return false;
@@ -142,12 +168,15 @@ namespace NoorAlMalaikaSchool.Pages.WhatsApp
                 string phone = GetString(message, "from");
                 if (string.IsNullOrWhiteSpace(providerId) || string.IsNullOrWhiteSpace(phone)) continue;
                 using (var db = new SchoolDbContext())
+                using (var transaction = db.Database.BeginTransaction(IsolationLevel.Serializable))
                 {
                     string messageText = ReadMessageText(message);
                     int? parentId = FindParentId(db, phone);
                     if (db.WhatsAppMessages.Any(x => x.ProviderMessageId == providerId))
                     {
-                        if (parentId.HasValue && IsOptOutMessage(messageText)) ApplyOptOut(db, parentId.Value, phone);
+                        if (parentId.HasValue && IsOptOutMessage(messageText))
+                            ApplyOptOut(db, parentId.Value, phone);
+                        transaction.Commit();
                         continue;
                     }
                     string contactName = GetContactName(contacts, phone);
@@ -163,7 +192,26 @@ namespace NoorAlMalaikaSchool.Pages.WhatsApp
                         CreatedAt = DateTime.UtcNow
                     });
                     db.SaveChanges();
-                    if (parentId.HasValue && IsOptOutMessage(messageText)) ApplyOptOut(db, parentId.Value, phone);
+                    if (parentId.HasValue && IsOptOutMessage(messageText))
+                        ApplyOptOut(db, parentId.Value, phone);
+                    else
+                    {
+                        // إرسال رد تلقائي بعدم استقبال الردود
+                        db.WhatsAppMessages.Add(new WhatsAppMessage
+                        {
+                            ParentId = parentId,
+                            RecipientName = contactName,
+                            PhoneNumber = phone,
+                            MessageBody = "عذراً، هذا الرقم مخصص للرسائل الإعلانية فقط ولا يتم مراقبة الردود عليه. يرجى التواصل مع الإدارة عبر الرقم الرسمي للمدرسة.",
+                            Direction = "Outbound",
+                            Status = "Queued",
+                            IsReplyToIncoming = true,
+                            CreatedAt = DateTime.UtcNow,
+                            CreatedBy = "WhatsAppWebhook"
+                        });
+                        db.SaveChanges();
+                    }
+                    transaction.Commit();
                 }
             }
         }
@@ -180,14 +228,21 @@ namespace NoorAlMalaikaSchool.Pages.WhatsApp
                 if (string.IsNullOrWhiteSpace(providerId)) continue;
                 string state = GetString(status, "status");
                 string mapped = MapStatus(state);
+                if (mapped == null) continue;
                 string errors = ReadErrors(status);
                 using (var db = new SchoolDbContext())
+                using (var transaction = db.Database.BeginTransaction(IsolationLevel.Serializable))
                 {
                     var row = db.WhatsAppMessages.FirstOrDefault(x => x.ProviderMessageId == providerId);
-                    if (row == null) continue;
-                    if (StatusRank(mapped) >= StatusRank(row.Status)) row.Status = mapped;
+                    if (row == null)
+                    {
+                        transaction.Commit();
+                        continue;
+                    }
+                    if (ShouldApplyStatus(row.Status, mapped)) row.Status = mapped;
                     if (!string.IsNullOrWhiteSpace(errors)) row.ErrorDetails = errors;
                     db.SaveChanges();
+                    transaction.Commit();
                 }
             }
         }
@@ -215,20 +270,60 @@ namespace NoorAlMalaikaSchool.Pages.WhatsApp
         {
             string normalized = WhatsAppCloudApi.NormalizeRecipientNumber(phone);
             if (normalized.Length < 8) return null;
-            foreach (Parent parent in db.Parents.AsNoTracking().Where(x => x.Phone != null).ToList())
-                if (WhatsAppCloudApi.NormalizeRecipientNumber(parent.Phone) == normalized) return parent.Id;
-            return null;
+            try
+            {
+                return db.Parents.AsNoTracking()
+                    .Where(x => x.PhoneNormalized == normalized)
+                    .Select(x => (int?)x.Id)
+                    .FirstOrDefault();
+            }
+            catch (SqlException ex)
+            {
+                if (ex.Number != 207 && ex.Number != 208 && ex.Number != 209) throw;
+                // Column not deployed yet: fall back to the legacy in-memory scan.
+                foreach (Parent parent in db.Parents.AsNoTracking().Where(x => x.Phone != null).ToList())
+                    if (WhatsAppCloudApi.NormalizeRecipientNumber(parent.Phone) == normalized) return parent.Id;
+                return null;
+            }
         }
+
+        private static readonly string[] OptOutKeywords =
+        {
+            "stop", "stop all", "stop messages", "stop all messages", "unsubscribe",
+            "إلغاء", "الغاء", "إيقاف", "ايقاف",
+            "إلغاء الاشتراك", "الغاء الاشتراك", "إيقاف الاشتراك", "ايقاف الاشتراك",
+            "إلغاء الرسائل", "الغاء الرسائل", "إيقاف الرسائل", "ايقاف الرسائل",
+            "إلغاء جميع الرسائل", "الغاء جميع الرسائل", "إيقاف جميع الرسائل", "ايقاف جميع الرسائل"
+        };
 
         private static bool IsOptOutMessage(string text)
         {
-            string value = (text ?? string.Empty).Trim();
-            return value.Equals("stop", StringComparison.OrdinalIgnoreCase) ||
-                   value.Equals("إلغاء", StringComparison.OrdinalIgnoreCase) ||
-                   value.Equals("الغاء", StringComparison.OrdinalIgnoreCase) ||
-                   value.Equals("إيقاف", StringComparison.OrdinalIgnoreCase) ||
-                   value.Equals("ايقاف", StringComparison.OrdinalIgnoreCase) ||
-                   value.Equals("unsubscribe", StringComparison.OrdinalIgnoreCase);
+            string normalized = NormalizeKeywordText(text);
+            if (normalized.Length == 0 || normalized.Length > 60) return false;
+            foreach (string keyword in OptOutKeywords)
+                if (string.Equals(normalized, keyword, StringComparison.Ordinal)) return true;
+            return false;
+        }
+
+        private static string NormalizeKeywordText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+            var builder = new StringBuilder(text.Length);
+            bool pendingSpace = false;
+            foreach (char character in text.Trim().ToLowerInvariant())
+            {
+                if (char.IsLetterOrDigit(character))
+                {
+                    if (pendingSpace && builder.Length > 0) builder.Append(' ');
+                    pendingSpace = false;
+                    builder.Append(character);
+                }
+                else
+                {
+                    pendingSpace = true;
+                }
+            }
+            return builder.ToString();
         }
 
         private static string GetContactName(object[] contacts, string phone)
@@ -262,8 +357,15 @@ namespace NoorAlMalaikaSchool.Pages.WhatsApp
                 case "delivered": return "Delivered";
                 case "read": return "Read";
                 case "failed": return "Failed";
-                default: return "Sent";
+                default: return null;
             }
+        }
+
+        private static bool ShouldApplyStatus(string current, string incoming)
+        {
+            if (incoming == "Failed")
+                return current != "Delivered" && current != "Read" && current != "Failed";
+            return StatusRank(incoming) > StatusRank(current);
         }
 
         private static int StatusRank(string value)
@@ -273,7 +375,7 @@ namespace NoorAlMalaikaSchool.Pages.WhatsApp
                 case "Sent": return 1;
                 case "Delivered": return 2;
                 case "Read": return 3;
-                case "Failed": return 4;
+                case "Failed": return 1;
                 default: return 0;
             }
         }

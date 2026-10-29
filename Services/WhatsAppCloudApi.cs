@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -62,7 +63,11 @@ namespace NoorAlMalaikaSchool.Services
 
         public static string ReadSetting(string environmentName, string appSettingName)
         {
+            // Precedence: IIS environment (secrets/server overrides) -> settings screen
+            // (database, travels with backups) -> Web.config (project default).
             string value = Environment.GetEnvironmentVariable(environmentName);
+            if (string.IsNullOrWhiteSpace(value) && !string.IsNullOrWhiteSpace(appSettingName))
+                value = SystemSettingsService.Get(appSettingName);
             if (string.IsNullOrWhiteSpace(value))
                 value = ConfigurationManager.AppSettings[appSettingName];
             return (value ?? string.Empty).Trim();
@@ -86,7 +91,7 @@ namespace NoorAlMalaikaSchool.Services
             {
                 { "messaging_product", "whatsapp" },
                 { "recipient_type", "individual" },
-                { "to", NormalizeNumber(message.PhoneNumber) }
+                { "to", NormalizeRecipientNumber(message.PhoneNumber) }
             };
 
             if (!string.IsNullOrWhiteSpace(message.ProviderTemplateName))
@@ -126,7 +131,7 @@ namespace NoorAlMalaikaSchool.Services
                 payload["text"] = new Dictionary<string, object>
                 {
                     { "preview_url", false },
-                    { "body", message.MessageBody }
+                    { "body", WhatsAppMessageFormatter.EnsureSchoolHeader(message.MessageBody) }
                 };
             }
 
@@ -142,11 +147,15 @@ namespace NoorAlMalaikaSchool.Services
             request.ReadWriteTimeout = 25000;
             request.ContentLength = body.Length;
 
-            using (Stream stream = request.GetRequestStream())
-                stream.Write(body, 0, body.Length);
-
+            bool requestMayHaveReachedProvider = false;
             try
             {
+                using (Stream stream = request.GetRequestStream())
+                {
+                    requestMayHaveReachedProvider = true;
+                    stream.Write(body, 0, body.Length);
+                }
+
                 using (var response = (HttpWebResponse)request.GetResponse())
                 using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
                 {
@@ -156,15 +165,81 @@ namespace NoorAlMalaikaSchool.Services
                     var first = messages != null && messages.Length > 0
                         ? messages[0] as Dictionary<string, object> : null;
                     object id;
-                    return first != null && first.TryGetValue("id", out id)
-                        ? Convert.ToString(id) : null;
+                    if (first == null || !first.TryGetValue("id", out id) ||
+                        string.IsNullOrWhiteSpace(Convert.ToString(id)))
+                        throw new WhatsAppSendException(
+                            "قبلت واجهة Meta الطلب دون إرجاع معرف رسالة؛ نتيجة الإرسال غير مؤكدة.",
+                            false, (int)response.StatusCode, null, true, null);
+                    return Convert.ToString(id);
                 }
             }
             catch (WebException ex)
             {
                 string details = ReadError(ex);
-                throw new InvalidOperationException(details, ex);
+                var response = ex.Response as HttpWebResponse;
+                int? status = response == null ? (int?)null : (int)response.StatusCode;
+                TimeSpan? retryAfter = ReadRetryAfter(response);
+                bool outcomeUnknown = status.HasValue
+                    ? status.Value == 408 || status.Value == 425 || status.Value >= 500
+                    : requestMayHaveReachedProvider;
+                bool retryable = outcomeUnknown
+                    ? false
+                    : status.HasValue
+                        ? status.Value == 429
+                        : IsRetryable(ex, null);
+                throw new WhatsAppSendException(
+                    details, retryable, status, retryAfter, outcomeUnknown, ex);
             }
+            catch (WhatsAppSendException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                if (!requestMayHaveReachedProvider) throw;
+                throw new WhatsAppSendException(
+                    "تعذّر تأكيد قبول Meta للرسالة؛ نتيجة الإرسال غير مؤكدة.",
+                    false, null, null, true, ex);
+            }
+        }
+
+        private static bool IsRetryable(WebException ex, int? status)
+        {
+            if (status.HasValue)
+                return status.Value == 429;
+            switch (ex.Status)
+            {
+                case WebExceptionStatus.Timeout:
+                case WebExceptionStatus.ConnectFailure:
+                case WebExceptionStatus.ConnectionClosed:
+                case WebExceptionStatus.KeepAliveFailure:
+                case WebExceptionStatus.NameResolutionFailure:
+                case WebExceptionStatus.ReceiveFailure:
+                case WebExceptionStatus.SendFailure:
+                case WebExceptionStatus.PipelineFailure:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static TimeSpan? ReadRetryAfter(HttpWebResponse response)
+        {
+            if (response == null) return null;
+            string raw = response.Headers["Retry-After"];
+            int seconds;
+            if (int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out seconds))
+            {
+                if (seconds <= 0 || seconds > 86400) return null;
+                return TimeSpan.FromSeconds(seconds);
+            }
+            DateTime retryAt;
+            if (!DateTime.TryParse(raw, CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out retryAt))
+                return null;
+            TimeSpan delay = retryAt - DateTime.UtcNow;
+            if (delay <= TimeSpan.Zero || delay > TimeSpan.FromDays(1)) return null;
+            return delay;
         }
 
         /// <summary>Reads the phone number profile from Graph API to confirm the token and id are valid.</summary>

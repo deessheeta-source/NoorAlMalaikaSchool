@@ -23,6 +23,9 @@ namespace NoorAlMalaikaSchool.Models
         public bool IsInternalRecipient { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? ScheduledAt { get; set; }
+        public DateTime? NextAttemptAt { get; set; }
+        public DateTime? ClaimedAt { get; set; }
+        public DateTime? SendStartedAt { get; set; }
         public DateTime? SentAt { get; set; }
         public string CreatedBy { get; set; }
     }
