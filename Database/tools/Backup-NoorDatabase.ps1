@@ -33,7 +33,7 @@ param(
     [ValidateRange(1, 3650)]
     [int]$RetentionDays = 14,
 
-    [string]$SecondaryDir = '',
+    [string]$SecondaryDir = $env:NOOR_BACKUP_SECONDARY_DIR,
 
     [switch]$SkipVerify,
 
@@ -60,8 +60,11 @@ if ([string]::IsNullOrWhiteSpace($BackupDir)) {
 # ---------------------------------------------------------------
 if ($RegisterTask) {
     $scriptPath = Join-Path $ToolsDir $ScriptName
-    $action  = New-ScheduledTaskAction -Execute 'powershell.exe' `
-        -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
+    $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`" -RetentionDays $RetentionDays"
+    if (-not [string]::IsNullOrWhiteSpace($SecondaryDir)) {
+        $arguments += " -SecondaryDir `"$SecondaryDir`""
+    }
+    $action  = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arguments
     $trigger = New-ScheduledTaskTrigger -Daily -At 02:00
     $principal = New-ScheduledTaskPrincipal `
         -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType S4U -RunLevel Highest
@@ -145,6 +148,10 @@ try {
 
     Write-Log "Backup start -> $bakFile (server=$Server)"
 
+    if ([string]::IsNullOrWhiteSpace($SecondaryDir)) {
+        Write-Log 'No secondary target configured (-SecondaryDir or NOOR_BACKUP_SECONDARY_DIR). The backup stays on the same disk and does not protect against disk failure.' 'WARN'
+    }
+
     $backupSql = "BACKUP DATABASE [$Database] TO DISK='$bakPathSql' WITH INIT, COMPRESSION, STATS=10;"
     $output = & $sqlcmd -S $Server -E -b -Q $backupSql 2>&1
     $sqlExit = $LASTEXITCODE
@@ -181,6 +188,13 @@ try {
             }
             Copy-Item -LiteralPath $bakFile -Destination $SecondaryDir -Force
             Write-Log ("Secondary copy -> {0}" -f $SecondaryDir)
+
+            # نفس سياسة الاحتفاظ تُطبَّق على النسخة الثانوية حتى لا تمتلئ.
+            $secondaryOld = Get-ChildItem -LiteralPath $SecondaryDir -Filter "$Database*.bak" -ErrorAction SilentlyContinue |
+                Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) }
+            foreach ($f in $secondaryOld) {
+                Remove-Item -LiteralPath $f.FullName -Force -ErrorAction SilentlyContinue
+            }
         }
         catch {
             Write-Log ("Secondary copy FAILED: " + $_.Exception.Message) 'WARN'
