@@ -48,6 +48,10 @@
 
         .fr-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 22px; border-radius: 11px; background: linear-gradient(135deg, #00b14f 0%, #4ed17e 100%); border: none; color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 6px 16px rgba(0,177,79,0.3); height: 44px; white-space: nowrap; font-family: 'Droid Arabic Kufi', sans-serif; width: 100%; }
         .fr-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,177,79,0.4); color: #fff; }
+        .fr-btn-whatsapp { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 0; border-radius: 11px; background: #25d366; color: #083b20; font: 700 13px 'Droid Arabic Kufi', sans-serif; cursor: pointer; }
+        .fr-btn-whatsapp:hover { background: #1fbd5b; }
+        .fr-whatsapp-actions { display: flex; align-items: center; gap: 10px; margin-inline-start: auto; flex-wrap: wrap; }
+        .fr-whatsapp-actions small { color: #66736b; font-size: 11px; }
 
         /* ---------- SUMMARY CARDS ---------- */
         .fr-summary { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
@@ -281,6 +285,11 @@
                     </div>
                     <div class="fr-card-header-text">
                         <h3>تفاصيل الفواتير</h3>
+                    <div class="fr-whatsapp-actions no-print">
+                        <asp:Button ID="btnExportWhatsAppPdf" runat="server" Text="تحميل PDF وفتح واتساب"
+                            CssClass="fr-btn-whatsapp" OnClick="btnExportWhatsAppPdf_Click" />
+                        <small>سيتم تنزيل التقرير وفتح محادثة المدير؛ أرفق ملف PDF في واتساب ثم أرسله.</small>
+                    </div>
                         <p>جميع الفواتير ضمن الفترة المحددة</p>
                     </div>
                 </div>

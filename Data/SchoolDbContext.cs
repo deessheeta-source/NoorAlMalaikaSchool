@@ -51,6 +51,7 @@ namespace NoorAlMalaikaSchool.Data
         public DbSet<WhatsAppTemplate> WhatsAppTemplates { get; set; }
         public DbSet<WhatsAppConsent> WhatsAppConsents { get; set; }
         public DbSet<WhatsAppClassMapping> WhatsAppClassMappings { get; set; }
+        public DbSet<SystemSetting> SystemSettings { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -98,6 +99,7 @@ namespace NoorAlMalaikaSchool.Data
             modelBuilder.Entity<WhatsAppTemplate>().ToTable("WhatsAppTemplates");
             modelBuilder.Entity<WhatsAppConsent>().ToTable("WhatsAppConsents");
             modelBuilder.Entity<WhatsAppClassMapping>().ToTable("WhatsAppClassMappings");
+            modelBuilder.Entity<SystemSetting>().ToTable("SystemSettings");
 
             modelBuilder.Entity<WhatsAppCampaign>().Property(x => x.Title).HasMaxLength(200);
             modelBuilder.Entity<WhatsAppCampaign>().Property(x => x.MessageKind).HasMaxLength(30);
@@ -128,12 +130,17 @@ namespace NoorAlMalaikaSchool.Data
             modelBuilder.Entity<WhatsAppClassMapping>().Property(x => x.DisplayName).HasMaxLength(150);
             modelBuilder.Entity<WhatsAppClassMapping>().Property(x => x.UpdatedBy).HasMaxLength(100);
             modelBuilder.Entity<WhatsAppClassMapping>().HasIndex(x => x.ClassRoomId).IsUnique();
+            modelBuilder.Entity<SystemSetting>().HasKey(x => x.Key);
+            modelBuilder.Entity<SystemSetting>().Property(x => x.Key).HasMaxLength(100);
+            modelBuilder.Entity<SystemSetting>().Property(x => x.UpdatedBy).HasMaxLength(100);
 
             // Name fields: HasMaxLength(200)
             modelBuilder.Entity<AcademicYear>().Property(a => a.Name).HasMaxLength(200);
             modelBuilder.Entity<GradeLevel>().Property(g => g.Name).HasMaxLength(200);
             modelBuilder.Entity<ClassRoom>().Property(c => c.Name).HasMaxLength(200);
             modelBuilder.Entity<Parent>().Property(p => p.Name).HasMaxLength(200);
+            modelBuilder.Entity<Parent>().Property(p => p.PhoneNormalized).HasMaxLength(30);
+            modelBuilder.Entity<Parent>().HasIndex(p => p.PhoneNormalized);
             modelBuilder.Entity<Student>().Property(s => s.Name).HasMaxLength(200);
             modelBuilder.Entity<Teacher>().Property(t => t.Name).HasMaxLength(200);
             modelBuilder.Entity<Subject>().Property(s => s.Name).HasMaxLength(200);

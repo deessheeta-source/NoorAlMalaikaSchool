@@ -30,6 +30,7 @@ namespace NoorAlMalaikaSchool.Pages.Reports
                // Local guard: revenue figures are finance-only. Do not rely on the
                // Site.Master path check alone.
                SecurityHelper.DenyUnlessPath();
+               ConfigureWhatsAppButton();
                SecurityHelper.HideViewExportControls(this);
 
                if (!IsPostBack)
@@ -313,6 +314,107 @@ namespace NoorAlMalaikaSchool.Pages.Reports
         }
 
         // =========================================================
+        private void ConfigureWhatsAppButton()
+        {
+            string managerPhone = WhatsAppApiSettings.ReadSetting(
+                "NOOR_WHATSAPP_MANAGER_PHONE", "WhatsAppManagerPhone");
+            string number = WhatsAppCloudApi.NormalizeRecipientNumber(managerPhone);
+            btnExportWhatsAppPdf.Visible = number.Length >= 10;
+            if (!btnExportWhatsAppPdf.Visible) return;
+
+            string script = "var s=document.getElementById('" + txtStartDate.ClientID + "').value;" +
+                "var e=document.getElementById('" + txtEndDate.ClientID + "').value;" +
+                "if(s&&e&&s>e){alert('تاريخ البداية يجب أن يسبق تاريخ النهاية.');return false;}" +
+                "var msg='السلام عليكم، أرسل لكم التقرير المالي للفترة '+s+' إلى '+e+'.';" +
+                "window.open('https://wa.me/" + number + "?text='+encodeURIComponent(msg),'_blank');";
+            btnExportWhatsAppPdf.OnClientClick = script;
+        }
+
+        protected void btnExportWhatsAppPdf_Click(object sender, EventArgs e)
+        {
+            SecurityHelper.DenyViewExport();
+
+            DateTime startDate, endDate;
+            if (!DateTime.TryParse(txtStartDate.Text, CultureInfo.InvariantCulture, DateTimeStyles.None, out startDate))
+                startDate = DateTime.Today.AddMonths(-1);
+            if (!DateTime.TryParse(txtEndDate.Text, CultureInfo.InvariantCulture, DateTimeStyles.None, out endDate))
+                endDate = DateTime.Today;
+            if (startDate.Date > endDate.Date) return;
+
+            string managerPhone = WhatsAppApiSettings.ReadSetting(
+                "NOOR_WHATSAPP_MANAGER_PHONE", "WhatsAppManagerPhone");
+            if (WhatsAppCloudApi.NormalizeRecipientNumber(managerPhone).Length < 10) return;
+
+            DateTime endExclusive = endDate.Date.AddDays(1);
+            IQueryable<Invoice> query = db.Invoices
+                .Include(i => i.Student)
+                .Include(i => i.Lines)
+                .Include(i => i.AcademicYear)
+                .Where(i => i.InvoiceDate >= startDate.Date
+                         && i.InvoiceDate < endExclusive
+                         && i.Status != InvoiceStatus.Cancelled);
+
+            int yearId;
+            if (int.TryParse(ddlAcademicYear.SelectedValue, out yearId) && yearId > 0)
+                query = query.Where(i => i.AcademicYearId == yearId);
+            int gradeLevelId;
+            if (int.TryParse(ddlGradeLevel.SelectedValue, out gradeLevelId) && gradeLevelId > 0)
+                query = query.Where(i => i.Student.ClassRoom != null
+                                      && i.Student.ClassRoom.GradeLevelId == gradeLevelId);
+            string section = ddlSection.SelectedValue;
+            if (!string.IsNullOrWhiteSpace(section))
+                query = query.Where(i => i.Student.Section == section);
+
+            var invoices = query.OrderBy(i => i.Student.Name).ThenBy(i => i.InvoiceDate).ToList();
+            var ids = invoices.Select(i => i.Id).ToList();
+            var payments = ids.Count == 0
+                ? new List<Payment>()
+                : db.Payments.Where(p => p.InvoiceId.HasValue && ids.Contains(p.InvoiceId.Value)).ToList();
+            var paidByInvoice = payments.GroupBy(p => p.InvoiceId.Value)
+                .ToDictionary(g => g.Key, g => g.Sum(p => p.Amount));
+            var rows = invoices.Select(i =>
+            {
+                decimal paid = paidByInvoice.ContainsKey(i.Id) ? paidByInvoice[i.Id] : 0m;
+                decimal remaining = Math.Max(0m, i.NetAmount - paid);
+                return new FinancialReportPdfRow
+                {
+                    AcademicYearName = i.AcademicYear != null ? i.AcademicYear.Name : i.AcademicYearId.ToString(),
+                    StudentName = i.Student != null ? i.Student.Name : "—",
+                    InvoiceNumber = i.InvoiceNumber,
+                    InvoiceDate = i.InvoiceDate,
+                    TotalAmount = i.TotalAmount,
+                    DiscountAmount = i.DiscountAmount,
+                    NetAmount = i.NetAmount,
+                    TotalPaid = paid,
+                    Remaining = remaining,
+                    Status = remaining <= 0 ? "مدفوعة بالكامل" : (paid > 0 ? "مدفوعة جزئياً" : "غير مدفوعة")
+                };
+            }).ToList();
+
+            decimal totalFees = invoices.Sum(i => i.TotalAmount);
+            decimal totalDiscount = invoices.Sum(i => i.DiscountAmount);
+            decimal totalNet = invoices.Sum(i => i.NetAmount);
+            decimal totalPaid = payments.Sum(p => p.Amount);
+            byte[] pdf = FinancialReportPdf.Create(
+                startDate, endDate,
+                ddlAcademicYear.SelectedItem == null ? "الكل" : ddlAcademicYear.SelectedItem.Text,
+                ddlGradeLevel.SelectedItem == null ? "الكل" : ddlGradeLevel.SelectedItem.Text,
+                section,
+                invoices.Select(i => i.StudentId).Distinct().Count(),
+                totalFees, totalDiscount, totalNet, totalPaid,
+                Math.Max(0m, totalNet - totalPaid), rows);
+
+            string fileName = "FinancialReport_" + DateTime.Now.ToString("yyyyMMdd_HHmm") + ".pdf";
+            Response.Clear();
+            Response.ClearHeaders();
+            Response.ContentType = "application/pdf";
+            Response.AddHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+            Response.AddHeader("Content-Length", pdf.Length.ToString(CultureInfo.InvariantCulture));
+            Response.BinaryWrite(pdf);
+            Response.Flush();
+            Response.SuppressContent = true;
+            Context.ApplicationInstance.CompleteRequest();
+        }
         // صف بسيط للبيانات
         // =========================================================
         private class WordRow

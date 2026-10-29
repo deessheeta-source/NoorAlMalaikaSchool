@@ -23,6 +23,9 @@ namespace NoorAlMalaikaSchool.Pages.Reports
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnExportWord;
 
+        /// <summary>btnExportWhatsAppPdf control.</summary>
+        protected global::System.Web.UI.WebControls.Button btnExportWhatsAppPdf;
+
         /// <summary>
         /// txtStartDate control.
         /// </summary>
