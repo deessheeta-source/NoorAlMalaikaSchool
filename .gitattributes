@@ -1,0 +1,3 @@
+# سكربتات Git hooks يجب أن تبقى LF حتى تعمل على Git for Windows.
+.githooks/* text eol=lf
+*.sh text eol=lf

@@ -21,17 +21,19 @@
 			xdt:Transform="SetAttributes(connectionString)" xdt:Locator="Match(name)" />
 	</connectionStrings>
 
+	<appSettings>
+		<!-- الإنتاج يعمل على HTTPS فقط: فعّل إعادة التوجيه و HSTS في وقت التشغيل.
+		     لا تفعّل هذه القيم قبل وجود ربط HTTPS بشهادة مطابقة لاسم النطاق. -->
+		<add key="EnableHttpsRedirect" value="true" xdt:Transform="SetAttributes(value)" xdt:Locator="Match(key)" />
+		<add key="EnableHsts" value="true" xdt:Transform="SetAttributes(value)" xdt:Locator="Match(key)" />
+	</appSettings>
+
 	<system.web>
 		<!--
-		  استبدل القيمتين أدناه بمفاتيح خاصة بالإنتاج مولَّدة بـ Generate-MachineKey.ps1.
-		  validationKey: 64 بايت hex (128 حرف)
-		  decryptionKey: 32 بايت hex (64 حرف)
+		  machineKey لم يعد داخل Web.config. المفتاح الفعلي لكل بيئة يُقرأ من
+		  Config\machineKey.config (غير مُتتبَّع في Git). ولّده بـ:
+		      Database\tools\Generate-MachineKey.ps1 -WriteTo Config\machineKey.config
 		-->
-		<machineKey validationKey="REPLACE_WITH_64_BYTE_HEX_VALIDATION_KEY_128_CHARS_LONG_00000000000000000000000000000000000000000000000000000000000000000000"
-		            decryptionKey="REPLACE_WITH_32_BYTE_HEX_DECRYPTION_KEY_64_CHARS_LONG_00000000000000000000"
-		            validation="HMACSHA256" decryption="AES"
-		            xdt:Transform="Replace" />
-
 		<compilation xdt:Transform="RemoveAttributes(debug)" />
 
 		<httpCookies httpOnlyCookies="true" requireSSL="true" xdt:Transform="SetAttributes(requireSSL)" xdt:Locator="Match(httpOnlyCookies)" />
@@ -53,13 +55,8 @@
 	</system.web>
 
 	<system.webServer>
-		<httpProtocol xdt:Transform="InsertIfMissing">
-			<customHeaders>
-				<add name="Strict-Transport-Security" value="max-age=31536000" />
-				<add name="X-Content-Type-Options" value="nosniff" />
-				<add name="X-Frame-Options" value="SAMEORIGIN" />
-			</customHeaders>
-		</httpProtocol>
+		<!-- الترويسات الأساسية (nosniff / X-Frame-Options / Referrer-Policy)
+		     أصبحت في Web.config. HSTS يُضاف وقت التشغيل عند EnableHsts=true. -->
 	</system.webServer>
 
 </configuration>

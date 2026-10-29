@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  قالب machineKey لبيئة جديدة.
+  انسخه إلى Config\machineKey.config ثم ولّد مفاتيح حقيقية:
+      Database\tools\Generate-MachineKey.ps1 -WriteTo Config\machineKey.config
+
+  الأطوال إلزامية:
+    validationKey : 64 بايت hex (128 حرفاً) — HMACSHA256
+    decryptionKey : 32 بايت hex (64 حرفاً)  — AES
+  لا تقصّ أو تُطِل أو تُضِف مسافات؛ الطول الخاطئ يعطّل ViewState.
+-->
+<machineKey validationKey="REPLACE_WITH_64_BYTE_HEX_VALIDATION_KEY_128_CHARS_LONG_00000000000000000000000000000000000000000000000000000000000000000000"
+            decryptionKey="REPLACE_WITH_32_BYTE_HEX_DECRYPTION_KEY_64_CHARS_LONG_00000000000000000000"
+            validation="HMACSHA256"
+            decryption="AES" />

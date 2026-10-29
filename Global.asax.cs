@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.IO;
 using System.Web;
 using System.Web.Hosting;
@@ -14,6 +15,9 @@ namespace NoorAlMalaikaSchool
         // =========================================================
         protected void Application_Start(object sender, EventArgs applicationStartEventArgs)
         {
+            // Housekeeping first: it is best-effort and must never block startup.
+            LogMaintenanceService.Run();
+
             try
             {
                 using (var db = new SchoolDbContext())
@@ -24,17 +28,33 @@ namespace NoorAlMalaikaSchool
             }
             catch (Exception ex)
             {
+                // Startup failures are logged loudly. By default they no longer take the
+                // whole site down: the app starts and each page surfaces its own database
+                // error, which is far easier to diagnose than a blank 500 at startup.
+                // Set FailFastOnStartup=true if you prefer the old fail-fast behaviour.
+                try { AppErrorLogger.Log(ex, "Application_Start"); } catch { }
                 WriteSimpleLog(ex, "Application_Start");
-                throw; // لا تبتلع الخطأ في بدء التطبيق
+
+                if (IsAppSettingTrue("FailFastOnStartup"))
+                {
+                    throw;
+                }
             }
         }
 
         protected void Application_BeginRequest(object sender, EventArgs e)
         {
+            // HTTPS enforcement and HSTS are opt-in (see Web.config appSettings).
+            // Both are no-ops on an HTTP-only installation.
+            if (EnforceHttps())
+            {
+                return;
+            }
+
             // Keep links created by older versions working after the page was renamed.
             string appRelativePath = Request.AppRelativeCurrentExecutionFilePath ?? string.Empty;
             if (appRelativePath.Equals(
-                "~/Pages/Payroll/DetailsVies.aspx",
+                "~/Pages/Payroll/DetailsVies.aspx", // link-check-ignore (legacy alias)
                 StringComparison.OrdinalIgnoreCase))
             {
                 string destination =
@@ -44,6 +64,69 @@ namespace NoorAlMalaikaSchool
                 Response.Redirect(destination, false);
                 Context.ApplicationInstance.CompleteRequest();
             }
+        }
+
+        /// <summary>
+        /// Redirects insecure requests to HTTPS when EnableHttpsRedirect=true and adds
+        /// Strict-Transport-Security when EnableHsts=true. Returns true when the current
+        /// request was redirected (the caller must then stop processing the request).
+        /// </summary>
+        private bool EnforceHttps()
+        {
+            bool enableRedirect = IsAppSettingTrue("EnableHttpsRedirect");
+            bool enableHsts = IsAppSettingTrue("EnableHsts");
+            if (!enableRedirect && !enableHsts)
+            {
+                return false;
+            }
+
+            bool isSecure = Request.IsSecureConnection ||
+                            (IsAppSettingTrue("TrustForwardedProto") &&
+                             string.Equals(Request.Headers["X-Forwarded-Proto"], "https",
+                                 StringComparison.OrdinalIgnoreCase));
+
+            if (enableHsts && isSecure)
+            {
+                // HSTS is only meaningful (and only honoured by browsers) over HTTPS.
+                Response.Headers["Strict-Transport-Security"] =
+                    "max-age=31536000; includeSubDomains";
+            }
+
+            if (!enableRedirect || isSecure)
+            {
+                return false;
+            }
+
+            UriBuilder builder = new UriBuilder(Request.Url)
+            {
+                Scheme = Uri.UriSchemeHttps,
+                Port = -1 // use the default HTTPS port unless a custom one is configured
+            };
+
+            string httpsPort = ConfigurationManager.AppSettings["HttpsPort"];
+            int configuredPort;
+            if (!string.IsNullOrWhiteSpace(httpsPort) &&
+                int.TryParse(httpsPort, out configuredPort) && configuredPort > 0)
+            {
+                builder.Port = configuredPort;
+            }
+
+            // 301 preserves GET semantics; 308 makes clients repeat the same method and body,
+            // which is what ASP.NET postbacks need if they ever arrive over HTTP.
+            int statusCode = (Request.HttpMethod == "GET" || Request.HttpMethod == "HEAD") ? 301 : 308;
+
+            Response.StatusCode = statusCode;
+            Response.StatusDescription = statusCode == 301 ? "Moved Permanently" : "Permanent Redirect";
+            Response.RedirectLocation = builder.Uri.AbsoluteUri;
+            Response.End();
+            return true;
+        }
+
+        private static bool IsAppSettingTrue(string key)
+        {
+            string value = ConfigurationManager.AppSettings[key];
+            bool parsed;
+            return !string.IsNullOrWhiteSpace(value) && bool.TryParse(value, out parsed) && parsed;
         }
 
 
