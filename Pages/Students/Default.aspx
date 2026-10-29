@@ -518,6 +518,16 @@
             color: #fff;
             text-decoration: none;
         }
+        .action-btn.whatsapp {
+            color: #128c7e;
+            border-color: rgba(18,140,126,0.3);
+        }
+        .action-btn.whatsapp:hover {
+            background: #25d366;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(37,211,102,0.25);
+            text-decoration: none;
+        }
 
         /* Pagination */
         .students-table .pagination {
@@ -953,6 +963,15 @@
                 CssClass="action-btn view"
                 ToolTip="تفاصيل">
                 <i class="fas fa-eye"></i>
+            </asp:LinkButton>
+
+            <asp:LinkButton ID="lnkWhatsApp" runat="server"
+                CommandName="WhatsAppGuardian"
+                CommandArgument='<%# Eval("Id") %>'
+                CssClass="action-btn whatsapp"
+                ToolTip="إرسال واتساب لولي الأمر"
+                Visible='<%# CanUseWhatsApp() && HasGuardianPhone(Eval("Parent")) %>'>
+                <i class="fab fa-whatsapp"></i>
             </asp:LinkButton>
 
             <asp:LinkButton ID="lnkToggle" runat="server"
