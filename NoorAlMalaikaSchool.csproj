@@ -7873,7 +7873,7 @@
     <Compile Include="Services\PasswordHasher.cs" />
     <Compile Include="Services\PasswordPolicy.cs" />
     <Compile Include="Services\PayrollCalculationService.cs" />
-    <Compile Include="Services\TeacherAttendanceFinancialService.cs" />
+    
     <Compile Include="Services\SecurityHelper.cs" />
     <Compile Include="Models\StudentAcademicYear.cs" />
     <Compile Include="Models\StudentSubscription.cs" />
@@ -7904,8 +7904,8 @@
     <Compile Include="Data\SeedData.cs" />
     <Compile Include="Data\Helpers\EnumHelper.cs" />
     <Compile Include="Data\Helpers\StageUrlHelper.cs" />
-    <Compile Include="Data\Services\FinancialService.cs" />
-    <Compile Include="Data\Services\StudentFinancialService.cs" />
+   
+    
     <Compile Include="Services\AppErrorLogger.cs" />
     <Compile Include="Services\FileUploadService.cs" />
     <Compile Include="Services\ErrorMessageHelper.cs" />

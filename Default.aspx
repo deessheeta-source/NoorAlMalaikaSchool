@@ -1,4 +1,3 @@
-
 <%@ Page Title="لوحة التحكم"
     Language="C#"
     MasterPageFile="~/Site.Master"
@@ -8,8 +7,7 @@
 
 <asp:Content ID="HeadContent1" ContentPlaceHolderID="HeadContent" runat="server">
 
-    <link href="<%= ResolveClientUrl("~/Content/css/fees-academia.css") %>" rel="stylesheet" />
-
+    <link href="<%= ResolveClientUrl("~/Content/css/dashboard.css") %>" rel="stylesheet" />
 
 </asp:Content>
 
@@ -22,51 +20,234 @@
 
         <ContentTemplate>
 
-            <div class="container-fluid" dir="rtl">
+            <div class="dashboard">
 
-                <!-- PAGE HEADER -->
-                <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <!-- =========================================================
+                     HERO — المدرسة واليوم
+                     ========================================================= -->
+                <div class="dashboard-hero">
 
-                    <div class="d-flex align-items-center">
+                    <div class="hero-brand">
+                        <div class="hero-mark">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div>
+                            <div class="hero-school">مدرسة نور الملائكة</div>
+                            <div class="hero-sub">Noor Al Malaika School — لوحة التحكم</div>
+                        </div>
+                    </div>
 
-                        <h6 class="mb-0 fw-bold d-flex align-items-center">
-                            <i class="fas fa-th-large me-2 text-academia"></i>
-                            لوحة التحكم
+                    <div class="hero-today">
+                        <i class="far fa-calendar-alt"></i>
+                        <span class="hero-date">اليوم</span>
+                    </div>
+
+                    <span class="dash-stage-badge" id="lblStageLabel" runat="server">طلاب</span>
+
+                </div>
+
+                <!-- =========================================================
+                     STAT STRIP — أرقام اليوم기의 ملخصة
+                     ========================================================= -->
+                <div class="dashboard-strip">
+
+                    <div class="dash-pulse-card">
+                        <h6 class="pulse-title">
+                            <i class="fas fa-chart-area"></i>
+                            نظرة سريعة على اليوم
                         </h6>
 
-                        <span class="badge bg-academia ms-3 rounded-pill px-3 py-2">
-                            <i class="fas fa-graduation-cap me-1"></i>
-                            نظرة عامة
-                        </span>
+                        <div class="pulse-grid">
 
+                            <!-- إجمالي الطلاب -->
+                            <div class="pulse-stat green">
+                                <span class="ps-label">إجمالي الطلاب</span>
+                                <span class="ps-value" id="lblTotalStudentsAll" runat="server">0</span>
+                                <i class="fas fa-users ps-icon"></i>
+                            </div>
+
+                            <!-- الفصول -->
+                            <div class="pulse-stat slate">
+                                <span class="ps-label">الفصول</span>
+                                <span class="ps-value" id="lblTotalClasses" runat="server">0</span>
+                                <i class="fas fa-chalkboard ps-icon"></i>
+                            </div>
+
+                            <!-- طلاب المرحلة المختارة -->
+                            <div class="pulse-stat green">
+                                <span class="ps-label">طلاب المرحلة المختارة</span>
+                                <span class="ps-value" id="lblTotalStudents" runat="server">0</span>
+                                <i class="fas fa-user-graduate ps-icon"></i>
+                            </div>
+
+                            <!-- المعلمون -->
+                            <div class="pulse-stat slate">
+                                <span class="ps-label">المعلمون</span>
+                                <span class="ps-value" id="lblTotalTeachers" runat="server">0</span>
+                                <i class="fas fa-chalkboard-teacher ps-icon"></i>
+                            </div>
+
+                            <!-- المدفوعات (تُعرض للموظفين المخولين فقط) -->
+                            <div id="pnlPaymentsStat" runat="server" visible="false"
+                                 class="pulse-stat amber">
+                                <span class="ps-label">المدفوعات</span>
+                                <span class="ps-value" id="lblTotalPayments" runat="server">0</span>
+                                <i class="fas fa-coins ps-icon"></i>
+                            </div>
+
+                            <!-- الغياب اليوم -->
+                            <div class="pulse-stat terracotta">
+                                <span class="ps-label">الغياب اليوم</span>
+                                <span class="ps-value" id="lblAbsentToday" runat="server">0</span>
+                                <i class="fas fa-user-times ps-icon"></i>
+                            </div>
+
+                            <!-- نسبة الحضور -->
+                            <div class="pulse-stat slate">
+                                <span class="ps-label">نسبة الحضور</span>
+                                <span class="ps-value" id="lblAttendanceRateBig" runat="server">-</span>
+                                <i class="fas fa-percentage ps-icon"></i>
+                            </div>
+
+                            <!-- المعلمون الحاضرون اليوم -->
+                            <div class="pulse-stat green">
+                                <span class="ps-label">المعلمون الحاضرون</span>
+                                <span class="ps-value" id="lblPresentTeachers" runat="server">0</span>
+                                <i class="fas fa-user-check ps-icon"></i>
+                            </div>
+
+                            <!-- المعلمون الغائبون اليوم -->
+                            <div class="pulse-stat terracotta">
+                                <span class="ps-label">المعلمون الغائبون</span>
+                                <span class="ps-value" id="lblAbsentTeachers" runat="server">0</span>
+                                <i class="fas fa-user-times ps-icon"></i>
+                            </div>
+
+                        </div>
                     </div>
 
                 </div>
 
+                <!-- =========================================================
+                     MAIN GRID — عمودان (2/1)
+                     ========================================================= -->
+                <div class="dashboard-grid">
 
-                <!-- STAT CARDS -->
-                <div class="row g-3 mb-4">
+                    <!-- العمود الأيمن — الحضور والرسم البياني -->
+                    <div class="dash-column">
 
-                    <!-- إجمالي الطلاب -->
-                    <div class="col-xl-2 col-md-4 col-sm-6">
+                        <!-- حضور الطلاب اليوم -->
+                        <div class="dash-section">
 
-                        <div class="dash-stat">
+                            <div class="dash-section-head">
+                                <h6 class="dash-section-title">
+                                    <i class="fas fa-clipboard-check"></i>
+                                    حضور الطلاب والغياب اليوم
+                                </h6>
+                            </div>
 
-                            <div class="d-flex align-items-center justify-content-between">
+                            <div class="dash-section-body">
+                                <div class="attendance-wrap">
 
-                                <div>
-                                    <div class="ds-value"
-                                         id="lblTotalStudentsAll"
-                                         runat="server">0</div>
-
-                                    <div class="ds-label">
-                                        إجمالي الطلاب
+                                    <!-- المرحلة الأساسية -->
+                                    <div class="attendance-stage">
+                                        <div class="att-stage-head">
+                                            <span class="stage-name">المرحلة الأساسية</span>
+                                        </div>
+                                        <div class="att-bar-track">
+                                            <div class="att-bar-fill" id="attendanceBar" runat="server" style="width:0%"></div>
+                                        </div>
+                                        <div class="att-stage-row basic">
+                                            <span class="att-label">حاضرون</span>
+                                            <span class="att-val att-present" id="lblPresentBasic" runat="server">0</span>
+                                        </div>
+                                        <div class="att-stage-row basic">
+                                            <span class="att-label">غائبون</span>
+                                            <span class="att-val att-absent" id="lblAbsentBasic" runat="server">0</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="ds-icon">
-                                    <i class="fas fa-users"></i>
+                                    <!-- المرحلة الثانوية -->
+                                    <div class="attendance-stage">
+                                        <div class="att-stage-head">
+                                            <span class="stage-name">المرحلة الثانوية</span>
+                                        </div>
+                                        <div class="att-stage-row basic">
+                                            <span class="att-label">حاضرون</span>
+                                            <span class="att-val att-present" id="lblPresentSecondary" runat="server">0</span>
+                                        </div>
+                                        <div class="att-stage-row basic">
+                                            <span class="att-label">غائبون</span>
+                                            <span class="att-val att-absent" id="lblAbsentSecondary" runat="server">0</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- نسبة الحضور الكلية -->
+                                    <div class="att-rate">
+                                        <span>نسبة الحضور الكلية</span>
+                                        <span class="rate-val">-</span>
+                                    </div>
+
                                 </div>
+                            </div>
+
+                        </div>
+
+                        <!-- توزيع الطلاب حسب الفصول (رسم أعمدة) -->
+                        <div class="dash-section chart-section">
+
+                            <div class="dash-section-head">
+                                <h6 class="dash-section-title">
+                                    <i class="fas fa-chart-bar"></i>
+                                    توزيع الطلاب حسب الفصول
+                                </h6>
+                            </div>
+
+                            <div class="dash-section-body">
+
+                                <asp:Panel ID="pnlBasicChart" runat="server">
+                                    <div class="chart-cols">
+                                        <asp:Repeater ID="rptBasicChart" runat="server"
+                                                      OnItemDataBound="rptBasicChart_ItemDataBound">
+                                            <ItemTemplate>
+                                                <div class="chart-col">
+                                                    <span class="chart-col-value"><%# Eval("Count") %></span>
+                                                    <div class="chart-col-track">
+                                                        <div class="chart-col-fill" id="chartFill" runat="server"></div>
+                                                    </div>
+                                                    <span class="chart-col-name"><%# Eval("ClassName") %></span>
+                                                </div>
+                                            </ItemTemplate>
+                                        </asp:Repeater>
+                                    </div>
+                                </asp:Panel>
+
+                                <asp:Label ID="lblBasicChartEmpty" runat="server" CssClass="chart-empty">
+                                    <i class="fas fa-book-open"></i>
+                                    لا توجد بيانات للفصول الأساسية
+                                </asp:Label>
+
+                                <asp:Panel ID="pnlSecondaryChart" runat="server">
+                                    <div class="chart-cols">
+                                        <asp:Repeater ID="rptSecondaryChart" runat="server"
+                                                      OnItemDataBound="rptSecondaryChart_ItemDataBound">
+                                            <ItemTemplate>
+                                                <div class="chart-col">
+                                                    <span class="chart-col-value"><%# Eval("Count") %></span>
+                                                    <div class="chart-col-track">
+                                                        <div class="chart-col-fill secondary" id="chartFillSecondary" runat="server"></div>
+                                                    </div>
+                                                    <span class="chart-col-name"><%# Eval("ClassName") %></span>
+                                                </div>
+                                            </ItemTemplate>
+                                        </asp:Repeater>
+                                    </div>
+                                </asp:Panel>
+
+                                <asp:Label ID="lblSecondaryChartEmpty" runat="server" CssClass="chart-empty">
+                                    <i class="fas fa-flask"></i>
+                                    لا توجد بيانات للفصول الثانوية
+                                </asp:Label>
 
                             </div>
 
@@ -74,604 +255,102 @@
 
                     </div>
 
-
-                    <!-- المدفوعات -->
-                    <div class="col-xl-2 col-md-4 col-sm-6"
-                         id="pnlPaymentsStat"
-                         runat="server"
-                         visible="false">
-
-                        <div class="dash-stat">
-
-                            <div class="d-flex align-items-center justify-content-between">
-
-                                <div>
-
-                                    <div class="ds-value"
-                                         id="lblTotalPayments"
-                                         runat="server">0</div>
-
-                                    <div class="ds-label">
-                                        المدفوعات
-                                    </div>
-
-                                </div>
-
-                                <div class="ds-icon">
-                                    <i class="fas fa-coins"></i>
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- غائبين اليوم -->
-                    <div class="col-xl-2 col-md-4 col-sm-6">
-
-                        <div class="dash-stat">
-
-                            <div class="d-flex align-items-center justify-content-between">
-
-                                <div>
-
-                                    <div class="ds-value"
-                                         id="lblAbsentToday"
-                                         runat="server">0</div>
-
-                                    <div class="ds-label">
-                                        غائبين اليوم
-                                    </div>
-
-                                </div>
-
-                                <div class="ds-icon">
-                                    <i class="fas fa-user-times"></i>
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- الفصول -->
-                    <div class="col-xl-2 col-md-4 col-sm-6">
-
-                        <div class="dash-stat">
-
-                            <div class="d-flex align-items-center justify-content-between">
-
-                                <div>
-
-                                    <div class="ds-value"
-                                         id="lblTotalClasses"
-                                         runat="server">0</div>
-
-                                    <div class="ds-label">
-                                        الفصول
-                                    </div>
-
-                                </div>
-
-                                <div class="ds-icon">
-                                    <i class="fas fa-chalkboard"></i>
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- المعلمون -->
-                    <div class="col-xl-2 col-md-4 col-sm-6">
-
-                        <div class="dash-stat">
-
-                            <div class="d-flex align-items-center justify-content-between">
-
-                                <div>
-
-                                    <div class="ds-value"
-                                         id="lblTotalTeachers"
-                                         runat="server">0</div>
-
-                                    <div class="ds-label">
-                                        المعلمون
-                                    </div>
-
-                                </div>
-
-                                <div class="ds-icon">
-                                    <i class="fas fa-chalkboard-teacher"></i>
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- حسب المرحلة -->
-                    <div class="col-xl-2 col-md-4 col-sm-6">
-
-                        <div class="dash-stat">
-
-                            <div class="d-flex align-items-center justify-content-between">
-
-                                <div>
-
-                                    <div class="ds-value"
-                                         id="lblTotalStudents"
-                                         runat="server">0</div>
-
-                                    <div class="ds-label"
-                                         id="lblStageLabel"
-                                         runat="server">
-                                        طلاب
-                                    </div>
-
-                                </div>
-
-                                <div class="ds-icon">
-                                    <i class="fas fa-user-graduate"></i>
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- MAIN ROW -->
-                <div class="row g-3">
-
-
-                    <!-- العمود الأيمن -->
-                    <div class="col-xl-8">
-
+                    <!-- العمود الأيسر — المدفوعات والإجراءات السريعة -->
+                    <div class="dash-column">
 
                         <!-- أحدث المدفوعات -->
-                        <div class="card academia-card"
-                             id="pnlRecentPayments"
-                             runat="server"
-                             visible="false">
+                        <div id="pnlRecentPayments" runat="server" visible="false"
+                             class="dash-section">
 
-                            <div class="card-body pt-3">
+                            <div class="dash-section-head">
+                                <h6 class="dash-section-title">
+                                    <i class="fas fa-receipt"></i>
+                                    أحدث المدفوعات
+                                </h6>
+                                <a href='<%= ResolveClientUrl("~/Pages/Payments/Default.aspx") %>'
+                                   class="dash-view-all">
+                                    عرض الكل <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </div>
 
-                                <div class="d-flex align-items-center justify-content-between mb-2">
-
-                                    <h6 class="fw-bold mb-0 d-flex align-items-center">
-                                        <i class="fas fa-receipt me-2 text-academia"></i>
-                                        أحدث المدفوعات
-                                    </h6>
-
-                                    <a href='<%= ResolveClientUrl("~/Pages/Payments/Default.aspx") %>'
-                                       class="btn btn-academia btn-sm px-3">
-
-                                        <i class="fas fa-eye me-1"></i>
-                                        عرض الكل
-
-                                    </a>
-
-                                </div>
-
-
+                            <div class="dash-section-body">
                                 <div class="table-responsive">
-
-                                    <asp:GridView
-                                        ID="gvRecentPayments"
-                                        runat="server"
-                                        CssClass="table table-custom table-borderless table-hover mb-0 align-middle"
-                                        AutoGenerateColumns="false"
-                                        EmptyDataText="لا توجد مدفوعات حتى الآن"
-                                        ShowHeader="true"
-                                        GridLines="None">
-
+                                    <asp:GridView ID="gvRecentPayments" runat="server"
+                                                  CssClass="recent-table"
+                                                  AutoGenerateColumns="false"
+                                                  EmptyDataText="لا توجد مدفوعات حتى الآن"
+                                                  ShowHeader="true"
+                                                  GridLines="None">
                                         <Columns>
-
                                             <asp:TemplateField HeaderText="الطالب">
-
                                                 <ItemTemplate>
-
                                                     <div class="d-flex align-items-center gap-2">
-
-                                                        <div class="pmt-avatar">
-                                                            <i class="fas fa-user-graduate"
-                                                               style="font-size:13px;"></i>
+                                                        <div class="recent-avatar">
+                                                            <i class="fas fa-user-graduate"></i>
                                                         </div>
-
-                                                        <span class="pmt-name">
-                                                            <%# Eval("StudentName") %>
-                                                        </span>
-
+                                                        <span class="recent-name"><%# Eval("StudentName") %></span>
                                                     </div>
-
+                                                    <span class="recent-meta"><%# Eval("PaymentMethodName") %></span>
                                                 </ItemTemplate>
-
                                             </asp:TemplateField>
-
 
                                             <asp:TemplateField HeaderText="المبلغ">
-
                                                 <ItemTemplate>
-
-                                                    <span class="pmt-amount">
-                                                        <%# Eval("Amount", "{0:N2}") %>
-                                                        د.ل
-                                                    </span>
-
+                                                    <span class="recent-amount"><%# Eval("Amount", "{0:N2}") %></span> د.ل
                                                 </ItemTemplate>
-
                                             </asp:TemplateField>
-
 
                                             <asp:TemplateField HeaderText="التاريخ">
-
                                                 <ItemTemplate>
-
-                                                    <span class="pmt-date">
-                                                        <%# Eval("PaymentDate", "{0:yyyy/MM/dd}") %>
-                                                    </span>
-
+                                                    <span class="recent-date"><%# Eval("PaymentDate", "{0:yyyy/MM/dd}") %></span>
                                                 </ItemTemplate>
-
-                                            </asp:TemplateField>
-
-
-                                            <asp:TemplateField HeaderText="الطريقة">
-
-                                                <ItemTemplate>
-
-                                                    <span class="inv-badge">
-                                                        <%# Eval("PaymentMethodName") %>
-                                                    </span>
-
-                                                </ItemTemplate>
-
                                             </asp:TemplateField>
 
                                         </Columns>
-
                                     </asp:GridView>
-
                                 </div>
 
+                                <div class="recent-empty">
+                                    <i class="fas fa-inbox"></i>
+                                    لا توجد مدفوعات حتى الآن
+                                </div>
                             </div>
 
                         </div>
 
+                        <!-- إجراءات سريعة -->
+                        <div class="dash-section">
 
-                        <!-- الأساسي -->
-                        <div class="chart-section">
-
-                            <asp:Panel ID="pnlBasicChart" runat="server">
-
-                                <div class="card academia-card">
-
-                                    <div class="card-body pt-3">
-
-                                        <h6 class="fw-bold mb-1 d-flex align-items-center">
-                                            <i class="fas fa-book-open me-2 text-academia"></i>
-                                            عدد الطلاب — الأساسي
-                                        </h6>
-
-
-                                        <asp:Repeater
-                                            ID="rptBasicChart"
-                                            runat="server"
-                                            OnItemDataBound="rptBasicChart_ItemDataBound">
-
-                                            <HeaderTemplate>
-                                                <div class="chart-cols">
-                                            </HeaderTemplate>
-
-
-                                            <ItemTemplate>
-
-                                                <div class="chart-col">
-
-                                                    <span class="chart-col-value">
-                                                        <%# Eval("Count") %>
-                                                    </span>
-
-                                                    <div class="chart-col-track">
-
-                                                        <div class="chart-col-fill"
-                                                             id="chartFill"
-                                                             runat="server">
-                                                        </div>
-
-                                                    </div>
-
-                                                    <span class="chart-col-name">
-                                                        <%# Eval("ClassName") %>
-                                                    </span>
-
-                                                </div>
-
-                                            </ItemTemplate>
-
-
-                                            <FooterTemplate>
-                                                </div>
-                                            </FooterTemplate>
-
-                                        </asp:Repeater>
-
-
-                                        <asp:Label
-                                            ID="lblBasicChartEmpty"
-                                            runat="server"
-                                            CssClass="text-muted"
-                                            Style="font-size:13px;display:none;">
-                                            لا توجد بيانات
-                                        </asp:Label>
-
-                                    </div>
-
-                                </div>
-
-                            </asp:Panel>
-
-                        </div>
-
-
-                        <!-- الثانوي -->
-                        <div class="chart-section">
-
-                            <asp:Panel ID="pnlSecondaryChart" runat="server">
-
-                                <div class="card academia-card">
-
-                                    <div class="card-body pt-3">
-
-                                        <h6 class="fw-bold mb-1 d-flex align-items-center">
-                                            <i class="fas fa-flask me-2 text-academia"></i>
-                                            عدد الطلاب — الثانوي
-                                        </h6>
-
-
-                                        <asp:Repeater
-                                            ID="rptSecondaryChart"
-                                            runat="server"
-                                            OnItemDataBound="rptSecondaryChart_ItemDataBound">
-
-                                            <HeaderTemplate>
-                                                <div class="chart-cols">
-                                            </HeaderTemplate>
-
-
-                                            <ItemTemplate>
-
-                                                <div class="chart-col">
-
-                                                    <span class="chart-col-value">
-                                                        <%# Eval("Count") %>
-                                                    </span>
-
-                                                    <div class="chart-col-track">
-
-                                                        <div class="chart-col-fill secondary"
-                                                             id="chartFillSecondary"
-                                                             runat="server">
-                                                        </div>
-
-                                                    </div>
-
-                                                    <span class="chart-col-name">
-                                                        <%# Eval("ClassName") %>
-                                                    </span>
-
-                                                </div>
-
-                                            </ItemTemplate>
-
-
-                                            <FooterTemplate>
-                                                </div>
-                                            </FooterTemplate>
-
-                                        </asp:Repeater>
-
-
-                                        <asp:Label
-                                            ID="lblSecondaryChartEmpty"
-                                            runat="server"
-                                            CssClass="text-muted"
-                                            Style="font-size:13px;display:none;">
-                                            لا توجد بيانات
-                                        </asp:Label>
-
-                                    </div>
-
-                                </div>
-
-                            </asp:Panel>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- العمود الأيسر -->
-                    <div class="col-xl-4">
-
-
-                        <!-- حضور الطلاب -->
-                        <div class="dash-panel mb-3">
-
-                            <div class="dp-head">
-
-                                <h6>
-                                    <i class="fas fa-clipboard-check"></i>
-                                    حضور الطلاب اليوم
+                            <div class="dash-section-head">
+                                <h6 class="dash-section-title">
+                                    <i class="fas fa-bolt"></i>
+                                    إجراءات سريعة
                                 </h6>
-
                             </div>
 
-
-                            <div class="dp-section-title px-3 pt-2 pb-1"
-                                 style="font-size:12px;font-weight:700;color:#00b14f;background:rgba(0,177,79,.04);border-bottom:1px solid #f0f0f0;">
-
-                                <i class="fas fa-book-open me-1"></i>
-                                المرحلة الأساسية
-
-                            </div>
-
-
-                            <div class="dp-row">
-
-                                <span class="dr-left">
-                                    الحاضرون
-                                </span>
-
-                                <span class="dr-right"
-                                      style="color:#00b14f;"
-                                      id="lblPresentBasic"
-                                      runat="server">
-                                    0
-                                </span>
-
-                            </div>
-
-
-                            <div class="dp-row">
-
-                                <span class="dr-left">
-                                    الغائبون
-                                </span>
-
-                                <span class="dr-right"
-                                      style="color:#dc2626;"
-                                      id="lblAbsentBasic"
-                                      runat="server">
-                                    0
-                                </span>
-
-                            </div>
-
-
-                            <div class="dp-section-title px-3 pt-2 pb-1"
-                                 style="font-size:12px;font-weight:700;color:#00b14f;background:rgba(0,177,79,.04);border-bottom:1px solid #f0f0f0;border-top:1px solid #f0f0f0;">
-
-                                <i class="fas fa-flask me-1"></i>
-                                المرحلة الثانوية
-
-                            </div>
-
-
-                            <div class="dp-row">
-
-                                <span class="dr-left">
-                                    الحاضرون
-                                </span>
-
-                                <span class="dr-right"
-                                      style="color:#00b14f;"
-                                      id="lblPresentSecondary"
-                                      runat="server">
-                                    0
-                                </span>
-
-                            </div>
-
-
-                            <div class="dp-row">
-
-                                <span class="dr-left">
-                                    الغائبون
-                                </span>
-
-                                <span class="dr-right"
-                                      style="color:#dc2626;"
-                                      id="lblAbsentSecondary"
-                                      runat="server">
-                                    0
-                                </span>
-
-                            </div>
-
-
-                            <div class="dp-progress">
-
-                                <div class="bar"
-                                     id="attendanceBar"
-                                     runat="server"
-                                     style="width:0%;">
+                            <div class="dash-section-body">
+                                <div class="quick-actions">
+                                    <a href='<%= ResolveClientUrl("~/Pages/Students/Default.aspx") %>'
+                                       class="action-btn">
+                                        <span>إدارة الطلاب</span>
+                                        <i class="fas fa-user-graduate"></i>
+                                    </a>
+                                    <a href='<%= ResolveClientUrl("~/Pages/Teachers/Default.aspx") %>'
+                                       class="action-btn">
+                                        <span>إدارة المعلمين</span>
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </a>
+                                    <a href='<%= ResolveClientUrl("~/Pages/Classes/Default.aspx") %>'
+                                       class="action-btn secondary">
+                                        <span>إدارة الصفوف</span>
+                                        <i class="fas fa-chalkboard"></i>
+                                    </a>
+                                    <a href='<%= ResolveClientUrl("~/Pages/Subjects/Default.aspx") %>'
+                                       class="action-btn amber">
+                                        <span>إدارة المواد</span>
+                                        <i class="fas fa-book-open"></i>
+                                    </a>
                                 </div>
-
-                            </div>
-
-
-                            <div class="dp-row">
-
-                                <span class="dr-left">
-                                    نسبة الحضور الكلية
-                                </span>
-
-                                <span class="dr-right"
-                                      id="lblAttendanceRate"
-                                      runat="server">
-                                    -
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- حضور المعلمين بالساعات -->
-                        <div class="dash-panel">
-
-                            <div class="dp-head">
-
-                                <h6>
-                                    <i class="fas fa-chalkboard-teacher"></i>
-                                    حضور المعلمين والمعلمات بالساعات اليوم
-                                </h6>
-
-                            </div>
-
-
-                            <div class="dp-row">
-
-                                <span class="dr-left">
-                                    المسجل حضورهم بالساعات
-                                </span>
-
-                                <span class="dr-right"
-                                      style="color:#00b14f;"
-                                      id="lblPresentTeachers"
-                                      runat="server">
-                                    0
-                                </span>
-
-                            </div>
-
-
-                            <div class="dp-row">
-
-                                <span class="dr-left">
-                                    المسجل غيابهم بالساعات
-                                </span>
-
-                                <span class="dr-right"
-                                      style="color:#dc2626;"
-                                      id="lblAbsentTeachers"
-                                      runat="server">
-                                    0
-                                </span>
-
                             </div>
 
                         </div>
@@ -680,11 +359,7 @@
 
                 </div>
 
-
-                <asp:Label
-                    ID="lblError"
-                    runat="server"
-                    CssClass="text-danger d-none" />
+                <asp:Label ID="lblError" runat="server" CssClass="dash-error" />
 
             </div>
 

@@ -91,7 +91,7 @@ namespace NoorAlMalaikaSchool
                 if (totalStudentsAll > 0)
                     attendanceBar.Style["width"] = (totalPresent * 100 / totalStudentsAll) + "%";
 
-                lblAttendanceRate.InnerText = attendanceRate;
+                lblAttendanceRateBig.InnerText = attendanceRate;
 
                 // حضور المعلمين يُستخرج من سجل الحصص بالساعات/الدقائق فقط.
                 // لا نعتمد على TeacherAttendances (التسجيل اليومي القديم).
